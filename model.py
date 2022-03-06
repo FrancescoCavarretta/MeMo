@@ -122,17 +122,17 @@ class Model:
             from the parent model to the child model
             
             Parameters
-            attrsrc: attribute name of the parentmodel
+            attrsrc: attribute(s) name(s) of the parentmodel
             attrdest: name of the attribute in the destination model
             
             kwargs: it can contain two only parameters for now
             modelname: name of the destination model
             func: function of mapping
         """
-        
-        # source attribute existing
-        assert attrsrc in self.__model_attrs__
-        
+        # standardize to something iterable
+        if type(attrsrc) == str:
+            attrsrc = (attrsrc, )
+            
         # it can be either a link between variables of between models
         if len(kwargs) > 0:
             # there are not others parameters than "submodel" or "function"
@@ -154,11 +154,16 @@ class Model:
             # which should have also that attribute
             assert callable(kwargs["function"]) or isinstance(kwargs["function"], str)
             
-        # add the link
-        self.__model_attrs__[attrsrc].append((attrdest, kwargs))            
+        # create the link(s)
+        for _attrsrc in attrsrc:
+            # source attribute existing
+            assert _attrsrc in self.__model_attrs__
         
-        # update the attribute in the model
-        self.__setattr__(attrsrc, getattr(self, attrsrc))
+            # add the link
+            self.__model_attrs__[_attrsrc].append((attrdest, kwargs))            
+            
+            # update the attribute in the model
+            self.__setattr__(_attrsrc, getattr(self, _attrsrc))
         
 
     def copy(self, deep=True):
@@ -194,6 +199,7 @@ if __name__ == "__main__":
     m2 = Model("test2")
     m2.test2 = 2
     m1.test1 = 5
+    
     m1.model2 = m2
     
     print (m1.test1, m2.test2)
@@ -222,3 +228,8 @@ if __name__ == "__main__":
     print (m1_copy.test1, m2.test2)
     print (m1_deep_copy.test1, m2.test2, m1_deep_copy.model2.test2)
     
+    m3 = Model("test3")
+    m3.test1 = 9
+    m3.test2 = 10
+    m3.__linkattr__("test1", "test2", function="test2=test1*2")
+    print (m3.test1, m3.test2)

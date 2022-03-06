@@ -18,7 +18,8 @@ class Distribution(model.Model):
         model.Model.__init__(self, name, **kwargs)
         
         if self.name == "gamma":
-            self.__linkattr__(attrsrc, submodel, attrdest)
+            self.__linkattr__("var", "std", function="import math\nsqrt(std)")
+        self.__linkattr__("var", "std", function="import math\nsqrt(std)")
             
     @property
     def var(self):
