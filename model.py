@@ -72,10 +72,14 @@ class Model:
         
         # if the attribute is an attribute of the model
         for linkinfo in self.__model_attrs__[name]:
-            if len(linkinfo) == 2:
-                modelname, attrdest = linkinfo
-            elif len(linkinfo) == 3:
-                modelname, attrdest, func = linkinfo
+            attrdest, kwargs = linkinfo
+            
+            # define the outputmodel
+            output_model = getattr(self, kwargs["submodel"]) if "submodel" in kwargs else self
+            
+            # if there is a map function
+            if "function" in kwargs:
+                func = kwargs["function"]
                 
                 try:
                     if isinstance(func, str):
@@ -93,7 +97,7 @@ class Model:
                         exec(func, globals(), _locals)
                         
                         # read the value
-                        value = _locals["return_value"]
+                        value = _locals[attrdest]
                     elif callable(func):
                         # it is a function
                         # read the parameters of the function
@@ -105,48 +109,53 @@ class Model:
                         raise ValueError(f"The link for variable {name} was not properly defined (2)")
                 except:
                     raise Exception(f"The link for variable {name} was not properly defined: an error occurred while running its map function")
-                    
-            else:
-                raise ValueError(f"The link for variable {name} was not properly defined (1)")
+
             
             # update the value
-            setattr(getattr(self, modelname), attrdest, value)
+            setattr(output_model, attrdest, value)
                 
                 
                 
-    def __linkattr__(self, attrsrc, submodel, attrdest, func=None):
+    def __linkattr__(self, attrsrc, attrdest, **kwargs):
         """
             Link attributes between two models 
             from the parent model to the child model
             
             Parameters
             attrsrc: attribute name of the parentmodel
-            modelname: name of the destination model
             attrdest: name of the attribute in the destination model
+            
+            kwargs: it can contain two only parameters for now
+            modelname: name of the destination model
+            func: function of mapping
         """
         
         # source attribute existing
         assert attrsrc in self.__model_attrs__
         
-        # the parameter should be a model
-        assert submodel in self.__model_attrs__
-        
-        # retrieve the model
-        submodel_dest = getattr(self, submodel)
-        
-        # which have also that attribute
-        assert isinstance(submodel_dest, Model) and \
-            hasattr(submodel_dest, attrdest)
-    
-        if func:  
-            # otherwise it runs and interpret a function
-            # function can be also a string
-            self.__model_attrs__[attrsrc].append((submodel, attrdest, func))
+        # it can be either a link between variables of between models
+        if len(kwargs) > 0:
+            # there are not others parameters than "submodel" or "function"
+            assert len(set(kwargs.keys()).difference(["submodel", "function"])) == 0
             
-        else:
-            # if func is None, the link just copy the value of a parameter
-            # into another
-            self.__model_attrs__[attrsrc].append((submodel, attrdest))
+        # perform two checks
+        if "submodel" in kwargs:       
+            # retrieve the model
+            submodel_dest = getattr(self, kwargs["submodel"])
+            
+            # which should have also that attribute
+            assert isinstance(submodel_dest, Model) and \
+                hasattr(submodel_dest, attrdest)
+                
+            del submodel_dest # free memory
+            
+
+        if "function" in kwargs:     
+            # which should have also that attribute
+            assert callable(kwargs["function"]) or isinstance(kwargs["function"], str)
+            
+        # add the link
+        self.__model_attrs__[attrsrc].append((attrdest, kwargs))            
         
         # update the attribute in the model
         self.__setattr__(attrsrc, getattr(self, attrsrc))
@@ -192,7 +201,8 @@ if __name__ == "__main__":
     def myfunc(test1):
         return test1/2
         
-    m1.__linkattr__("test1", "model2", "test2", func=myfunc)
+    #m1.__linkattr__("test1", "test2", submodel="model2", function=myfunc)
+    m1.__linkattr__("test1", "test2", submodel="model2", function="test2=test1*5")
 
     print (m1.test1, m2.test2)
     
