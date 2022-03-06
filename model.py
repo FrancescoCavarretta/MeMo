@@ -9,7 +9,7 @@ class Model:
     Abstract class representing a model archetype
     """
     
-    def __init__(self, **kwargs):
+    def __init__(self, name, **kwargs):
         """
         Initialize a model
 
@@ -21,16 +21,25 @@ class Model:
         # store the parameter names
         self.__model_attrs__ = {}
         
+        # each model should have a name
+        self.name = name
+        
         # create parameters
-        for name, val in kwargs.items():
+        for varname, varvalue in kwargs.items():
             # check the parameters does not exist to not overwrite any
             # class attribute
-            if name not in self.__dict__:
-                setattr(self, name, val)
-                self.__model_attrs__[name] = []
+            if varname not in self.__dict__:
+                setattr(self, varname, varvalue)
+                self.__model_attrs__[varname] = []
                 
         
-            
+    def __str__(self):
+        '''
+        Returns
+        -------
+        Model name
+        '''
+        return self.name
             
     def __setattr__(self, name, value):
         """
