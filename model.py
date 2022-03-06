@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 class Model:
     """
     Created on Wed Mar  2 20:14:03 2022
@@ -25,6 +28,8 @@ class Model:
             if name not in self.__dict__:
                 setattr(self, name, val)
                 self.__model_attrs__[name] = []
+                
+        
             
             
     def __setattr__(self, name, value):
