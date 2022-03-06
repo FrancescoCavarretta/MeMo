@@ -15,6 +15,7 @@ class Model:
 
         Parameters
         ----------
+        name: model identifier
         **kwargs : parameters of the model
         """
         
