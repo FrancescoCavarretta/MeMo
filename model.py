@@ -180,8 +180,8 @@ class Model:
     
     
 if __name__ == "__main__":
-    m1 = Model()
-    m2 = Model()
+    m1 = Model("test1")
+    m2 = Model("test2")
     m2.test2 = 2
     m1.test1 = 5
     m1.model2 = m2

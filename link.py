@@ -113,8 +113,8 @@ class Link:
 
 if __name__ == "__main__":
     from model import Model
-    m1 = Model()
-    m2 = Model()
+    m1 = Model("m1")
+    m2 = Model("m2")
     l = Link(m1, m2)
     m1.test1 = 2
     m2.test2 = 44
