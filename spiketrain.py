@@ -11,8 +11,7 @@ import model
 class SpikeTrain(model.Model):
     def __init__(self, name, **kwargs):    
         """
-            It contains a population of different models.
-            For each, we define the number of its instances.
+            It contains a model of spike trains.
             name: spike train identifier
             **kwargs : parameters of the spike train model.
         """
