@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from .model import Model
+from .link import Link
+        
 class MicroCircuit:
     def __init__(self, name):
         self.name = name
@@ -8,9 +11,6 @@ class MicroCircuit:
         self.links = set()
         
     def add(self, x):
-        from memo.model import Model
-        from memo.link import Link
-        
         if isinstance(x, Link):
             self.links.add(x)
             self.add(x.input)

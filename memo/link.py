@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+from .model import Model
 
 class Link:
     def __init__(self, input, output, function=None):
@@ -46,8 +47,7 @@ class Link:
         m : Model
             Model of input
         """
-        import model
-        assert isinstance(m, model.Model)
+        assert isinstance(m, Model)
         self.__input =  m
         
         
@@ -69,8 +69,7 @@ class Link:
         m : Model
             Model of output
         """
-        import model
-        assert isinstance(m, model.Model)
+        assert isinstance(m, Model)
         self.__output =  m
         
         

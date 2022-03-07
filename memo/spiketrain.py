@@ -6,28 +6,27 @@ Created on Mon Mar  7 09:37:14 2022
 @author: francesco
 """
 
-import model
-import link
+from .model import Model, ModelPopulation
+from .distribution import Distribution
 
-class SpikeTrain(model.Model):
+class SpikeTrain(Model):
     def __init__(self, name, **kwargs):    
         """
             It contains a model of spike trains.
             name: spike train identifier
             **kwargs : parameters of the spike train model.
         """
-        import distribution as distr
         
-        model.Model.__init__(self, name, **kwargs)
+        Model.__init__(self, name, **kwargs)
         
         if self.name == "abbasi":
-            self.distribution = distr.Distribution("gamma")
+            self.distribution = Distribution("gamma")
             self.__linkattr__("regularity", "k", submodel="distribution")
             self.__linkattr__("regularity", "theta", submodel="distribution", function="theta=1.0/regularity")
             
             self.__linkattr__("mean_rate", "rate", function="rate=rate/rate.mean()*mean_rate")
         elif self.name == "poissonian":
-            self.distribution = distr.Distribution("poisson")
+            self.distribution = Distribution("poisson")
             
             self.__linkattr__("mean_rate", "mean", submodel="distribution")
         else:
@@ -35,7 +34,7 @@ class SpikeTrain(model.Model):
             
             
             
-class SpikeTrainPopulation(model.ModelPopulation):
+class SpikeTrainPopulation(ModelPopulation):
     def __init__(self, name, **kwargs):    
         """
             It contains a population of different spike train models.
@@ -45,8 +44,7 @@ class SpikeTrainPopulation(model.ModelPopulation):
             If the name begin with "n_[spiketrain]",
             it indicates a repetition of models [spiketrain]
         """
-        import distribution as distr
-        model.ModelModelPopulation.__init__(self, name, **kwargs)  
+        ModelModelPopulation.__init__(self, name, **kwargs)  
             
 
     def __setattr__(self, attrname, value, *args):    
