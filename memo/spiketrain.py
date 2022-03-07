@@ -7,6 +7,7 @@ Created on Mon Mar  7 09:37:14 2022
 """
 
 import model
+import link
 
 class SpikeTrain(model.Model):
     def __init__(self, name, **kwargs):    

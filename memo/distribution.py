@@ -3,6 +3,7 @@
 
 
 import model
+import link
 
 class Distribution(model.Model):
     __DISTRLINKS__ = {
