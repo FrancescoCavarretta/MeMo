@@ -31,7 +31,7 @@ class Model:
             # class attribute
             if varname not in self.__dict__:
                 setattr(self, varname, varvalue)
-                self.__model_attrs__[varname] = []
+                self.__model_attrs__[varname] = {}
                 
         
     def __str__(self):
@@ -42,7 +42,7 @@ class Model:
         '''
         return self.name
             
-    def __setattr__(self, name, value):
+    def __setattr__(self, name, value, *args):
         """
         Change the value of an attribute.
         If it is linked to lower level models,
@@ -56,9 +56,15 @@ class Model:
             Value of the attribute
         """
         
+        # base of the eventual recursion
+        if len(args) > 0:
+            # check the recursion
+            if (self.name + "." + name) in args:
+                return     
+        
         # check whether it is new
         new_attrs_flag = not hasattr(self, name)
-        
+
         # update the attribute
         super().__setattr__(name, value)
         
@@ -66,23 +72,28 @@ class Model:
         if name == "__model_attrs__":
             return
         
+        # list of set attributes
+        args += ((self.name + "." + name), )
+                
         # create the entry
         if new_attrs_flag and name not in self.__model_attrs__:
-            self.__model_attrs__[name] = []
+            self.__model_attrs__[name] = {}      
         
         # if the attribute is an attribute of the model
-        for linkinfo in self.__model_attrs__[name]:
-            attrdest, kwargs = linkinfo
+        for attrdest_ref, function in self.__model_attrs__[name].items():
             
             # define the outputmodel
-            output_model = getattr(self, kwargs["submodel"]) if "submodel" in kwargs else self
-            
-            # if there is a map function
-            if "function" in kwargs:
-                func = kwargs["function"]
+            if type(attrdest_ref) == tuple:
+                # then it is an attribute of the submodel
+                output_model, attrdest = attrdest_ref
+            else:
+                output_model = self
+                attrdest = attrdest_ref
                 
+            # if there is a map function
+            if function:
                 try:
-                    if isinstance(func, str):
+                    if isinstance(function, str):
                         # interpret the string, 
                         # which is a chunk of python code
                         
@@ -94,14 +105,14 @@ class Model:
                             _locals[varname] = getattr(self, varname)
                             
                         # run python script
-                        exec(func, globals(), _locals)
+                        exec(function, globals(), _locals)
                         
                         # read the value
                         value = _locals[attrdest]
-                    elif callable(func):
+                    elif callable(function):
                         # it is a function
                         # read the parameters of the function
-                        value = func(*[
+                        value = function(*[
                             getattr(self, varname) for varname in func.__code__.co_varnames
                             ])
                         
@@ -112,9 +123,11 @@ class Model:
 
             
             # update the value
-            setattr(output_model, attrdest, value)
-                
-                
+            # there is a risk of recursion at this point
+            # rink of infinite recursion
+            # ---> setattr(output_model, attrdest, value) <---
+            output_model.__setattr__(attrdest, value, *args)
+                      
                 
     def __linkattr__(self, attrsrc, attrdest, **kwargs):
         """
@@ -141,18 +154,27 @@ class Model:
         # perform two checks
         if "submodel" in kwargs:       
             # retrieve the model
-            submodel_dest = getattr(self, kwargs["submodel"])
+            submodel = getattr(self, kwargs["submodel"])
             
             # which should have also that attribute
-            assert isinstance(submodel_dest, Model) and \
-                hasattr(submodel_dest, attrdest)
-                
-            del submodel_dest # free memory
+            assert isinstance(submodel, Model) and \
+                hasattr(submodel, attrdest)
+        else:
+            submodel = None
             
 
         if "function" in kwargs:     
+            function = kwargs["function"]
+            
             # which should have also that attribute
-            assert callable(kwargs["function"]) or isinstance(kwargs["function"], str)
+            assert callable(function) or isinstance(function, str)
+        else:
+            function = None
+            
+            
+        # reformat attrdest if needed
+        if submodel:
+            attrdest = (submodel, attrdest)
             
         # create the link(s)
         for _attrsrc in attrsrc:
@@ -160,7 +182,7 @@ class Model:
             assert _attrsrc in self.__model_attrs__
         
             # add the link
-            self.__model_attrs__[_attrsrc].append((attrdest, kwargs))            
+            self.__model_attrs__[_attrsrc][attrdest] = function            
             
             # update the attribute in the model
             self.__setattr__(_attrsrc, getattr(self, _attrsrc))
