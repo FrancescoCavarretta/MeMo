@@ -56,12 +56,6 @@ class Model:
             Value of the attribute
         """
         
-        # base of the eventual recursion
-        if len(args) > 0:
-            # check the recursion
-            if (self.name + "." + name) in args:
-                return     
-        
         # check whether it is new
         new_attrs_flag = not hasattr(self, name)
 
@@ -72,6 +66,13 @@ class Model:
         if name == "__model_attrs__":
             return
         
+        # base of the eventual recursion
+        # name is fixed at the initialization so it does not make problems
+        if len(args) > 0:
+            # check the recursion
+            if (self.name + "." + name) in args:
+                return  
+            
         # list of set attributes
         args += ((self.name + "." + name), )
                 
@@ -113,7 +114,7 @@ class Model:
                         # it is a function
                         # read the parameters of the function
                         value = function(*[
-                            getattr(self, varname) for varname in func.__code__.co_varnames
+                            getattr(self, varname) for varname in function.__code__.co_varnames
                             ])
                         
                     else:
@@ -215,7 +216,63 @@ class Model:
         """
         return self.copy(deep=deep)
     
-    
+
+
+
+class ModelPopulation(Model):
+    """
+        It contains a population of different models.
+        For each, we define the number of its instances.
+        name: model group identifier
+        **kwargs : parameters of the model.
+        If the name begin with "n_[modelname]",
+        it indicates a repetition of models [modelname]
+    """
+    def __init__(self, name, **kwargs):        
+        # check whether the number of instance were fixed
+        # otherwise create the variable n_[modelname]
+        # and n_[modelname] needs to be create after the model vars
+        from collections import OrderedDict 
+        
+        kwargs = OrderedDict(dict())
+        for k in kwargs.keys():
+            if k.startswith("n_"):
+                kwargs.move_to_end(k)
+                
+        Model.__init__(self, name, **kwargs) 
+        
+
+                
+
+    def __setattr__(self, attrname, value, *args):
+        """
+            Perform a type checking before fixing the values
+        """        
+
+        # set the attributes
+        super().__setattr__(attrname, value, *args)
+        
+        # two only exception
+        if attrname != "name" and attrname != "__model_attrs__":
+            # type checking
+            if attrname.startswith("n_"):     
+                # we can fix numbers only for n_[modelname] or Models describing the number
+                assert attrname[2:] in self.__model_attrs__ and (type(value) == int or isinstance(value, Model))
+            else:
+                # contains Model only in other cases
+                assert isinstance(value, Model)        
+                
+            # set n instances
+            nattrname = "n_" + attrname
+            if not hasattr(self, nattrname):
+                super().__setattr__(nattrname, 1, *args)
+            
+        
+        
+            
+            
+            
+
 if __name__ == "__main__":
     m1 = Model("test1")
     m2 = Model("test2")
@@ -229,8 +286,8 @@ if __name__ == "__main__":
     def myfunc(test1):
         return test1/2
         
-    #m1.__linkattr__("test1", "test2", submodel="model2", function=myfunc)
-    m1.__linkattr__("test1", "test2", submodel="model2", function="test2=test1*5")
+    m1.__linkattr__("test1", "test2", submodel="model2", function=myfunc)
+    #m1.__linkattr__("test1", "test2", submodel="model2", function="test2=test1*5")
 
     print (m1.test1, m2.test2)
     
@@ -255,3 +312,5 @@ if __name__ == "__main__":
     m3.test2 = 10
     m3.__linkattr__("test1", "test2", function="test2=test1*2")
     print (m3.test1, m3.test2)
+    
+    mp = ModelPopulation('testpop', n_m1=5, m1=m1, m2=m2, m3=m3)
