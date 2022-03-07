@@ -11,26 +11,49 @@ class Distribution(model.Model):
                                     mean="mean=k*theta"),
             ("mean", "var"):dict(k="k=(mean**2)/var",
                                  theta="theta=var/mean"),
-            ("mean", "std"): ("mean", "var")
+            ("mean", "std"): ("mean", "var"),
+            None:dict(k=1, theta=1)
         },
         "poisson":{
             "l":dict(var="var=l", mean="mean=l"),
             "mean":dict(l="l=mean"),
             "var":dict(l="l=var"),
-            "std":"var"
+            "std":"var",
+            None:dict(mean=1)
         },
         "uniform":{
             ("a", "b"):dict(mean="mean=(a+b)/2", var="var=1/12*(b-a)**2"),
             ("mean", "var"):dict(b="b=sqrt(3*var)+2*mean", a="a=2*mean-b"),
-            ("mean", "std"):("mean", "var")
+            ("mean", "std"):("mean", "var"),
+            None:dict(a=0, b=1)
         },
         "normal":{
             ("mean", "var"):dict(),
-            ("mean", "std"):("mean", "var")
+            ("mean", "std"):("mean", "var"),
+            None:dict(mean=0, std=1)
         }
     }
     
     
+    def get_standard_params(distr_name):
+        """
+        Return the parameters making the standard distribution
+        Parameters
+        ----------
+        distr_name : str
+            distribution name
+
+        Returns
+        -------
+        standard params
+        """
+        # get the parameters
+        try:
+            return Distribution.__DISTRLINKS__[distr_name][None]
+        except KeyError:
+            raise ValueError(f"Distribution {distr_name} not known")
+            
+            
     def get_param_links(distr_name):
         """
         Return the parameter links for that distribution
@@ -43,7 +66,6 @@ class Distribution(model.Model):
         Returns
         -------
         links
-
         """
         import copy
         
@@ -51,10 +73,11 @@ class Distribution(model.Model):
         try:
             ret = {}
             for key, values in Distribution.__DISTRLINKS__[distr_name].items():
-                if type(key) == tuple:
-                    key = tuple(sorted(key))
-                
-                ret.update({key:copy.deepcopy(values)})
+                if key:
+                    if type(key) == tuple:
+                        key = tuple(sorted(key))
+                    
+                    ret.update({key:copy.deepcopy(values)})
             return ret
         except KeyError:
             raise ValueError(f"Distribution {distr_name} not known")
@@ -95,11 +118,13 @@ class Distribution(model.Model):
                 self.__linkattr__(attrsrc, attrdest, function=function)
                 
                 
+                
+        # if no additional parameter, set  the standard parameters
+        if len(kwargs) == 0:
+            kwargs = Distribution.get_standard_params(name)
+                
         # initialize
         model.Model.__init__(self, name, **kwargs)
-        
-      
- 
         
         # distribution links
         distrlinks = Distribution.get_param_links(self.name)
@@ -130,3 +155,4 @@ class Distribution(model.Model):
 if __name__ == "__main__":
     d1 = Distribution("gamma", k=1, theta=2)
     d2 = Distribution("gamma", mean=1, var=2)
+    d3 = Distribution("normal")
