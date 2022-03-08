@@ -232,13 +232,11 @@ class SpikeTrainToSynapse:
         
         
         vec = h.Vector(self.input.product)
-        self.product = (vec, )
-        return self.product
-        #vs = h.VecStim()
-        #vs.play(vec)
-        #self.output.NetCon.setpre(vs)
-        #self.product = (vec, vs)
-        #return self.product     
+        vs = h.VecStim()
+        vs.play(vec)
+        self.output.NetCon.setpre(vs)
+        self.product = (vec, vs)
+        return self.product     
     
     
         

@@ -33,5 +33,7 @@ if __name__ == "__main__":
     
     r = precompiler.precompile(mc1, (0,5))
     compiler.compile(r, neuron)
-    
-    
+
+    import neuron
+    neuron.h.load_file("nrngui.hoc")
+    neuron.h.run(5000)
