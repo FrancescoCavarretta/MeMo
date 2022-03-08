@@ -2,6 +2,26 @@
 # -*- coding: utf-8 -*-
 
 class Model:
+    class ParamIterator:
+        def __init__(self, model, params, models_only=False, filter_out=["name"]):
+            self.__model = model
+            self.__index = -1
+            self.__params = params
+            self.__models_only = models_only
+            self.__filter_out = filter_out
+            
+        def __next__(self):
+            while self.__index < len(self.__params)-1:
+                self.__index += 1
+                
+                pname = self.__params[self.__index]
+                pval = getattr(self.__model, pname)
+                if pname not in self.__filter_out and \
+                    (not self.__models_only or self.__models_only and isinstance(pval, Model)):
+                    return pname 
+                
+            raise StopIteration
+            
     """
     Created on Wed Mar  2 20:14:03 2022
     @author: Francesco Cavarretta
@@ -33,7 +53,26 @@ class Model:
                 setattr(self, varname, varvalue)
                 self.__model_attrs__[varname] = {}
                 
-        
+                
+    def itersubmodels(self):
+        """
+            Iterator for models
+        """
+        pi = Model.ParamIterator(self, list(self.__model_attrs__.keys()), models_only=True)
+        while True:
+            try:
+                yield pi.__next__()
+            except StopIteration:
+                break
+    
+    
+    def __iter__(self):
+        """
+            Iterator
+        """
+        return Model.ParamIterator(self, list(self.__model_attrs__.keys()), models_only=False)
+    
+    
     def __str__(self):
         '''
         Returns
@@ -114,7 +153,7 @@ class Model:
                         # it is a function
                         # read the parameters of the function
                         value = function(*[
-                            getattr(self, varname) for varname in function.__code__.co_varnames
+                            getattr(self, varname) for varname in function.__code__.co_varnames[:self.generation_function.__code__.co_argcount]
                             ])
                         
                     else:
@@ -219,7 +258,23 @@ class Model:
 
 
 
-class ModelPopulation(Model):
+class ModelPopulation(Model):    
+    
+    def __iter__(self):
+        """
+            Iterator
+        """
+        params = list(self.__model_attrs__.keys())
+        del params[params.index("name")]
+        i = 0
+        while i < len(params):
+            if params[i].startswith("n_"):
+                del params[i]
+                continue
+            i += 1
+        return Model.ParamIterator(self, params)
+
+    
     """
         It contains a population of different models.
         For each, we define the number of its instances.
@@ -234,7 +289,7 @@ class ModelPopulation(Model):
         # and n_[modelname] needs to be create after the model vars
         from collections import OrderedDict 
         
-        kwargs = OrderedDict(dict())
+        kwargs = OrderedDict(kwargs)
         for k in kwargs.keys():
             if k.startswith("n_"):
                 kwargs.move_to_end(k)

@@ -44,7 +44,7 @@ class SpikeTrainPopulation(ModelPopulation):
             If the name begin with "n_[spiketrain]",
             it indicates a repetition of models [spiketrain]
         """
-        ModelModelPopulation.__init__(self, name, **kwargs)  
+        ModelPopulation.__init__(self, name, **kwargs)  
             
 
     def __setattr__(self, attrname, value, *args):    
