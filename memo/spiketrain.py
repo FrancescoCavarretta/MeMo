@@ -10,27 +10,68 @@ from .model import Model, ModelPopulation
 from .distribution import Distribution
 
 class SpikeTrain(Model):
+    time_conversion = {
+        "tenth_ms":1e-4,
+        "ms":1e-3,
+        "s":1.0,
+        "m":60,
+        "h":3600.0
+        }
+    
     def __init__(self, name, **kwargs):    
         """
             It contains a model of spike trains.
             name: spike train identifier
             **kwargs : parameters of the spike train model.
         """
+        from collections import OrderedDict
+        
+        kwargs = OrderedDict(kwargs)
+
+        if "time_unit" not in kwargs:
+            kwargs["time_unit"] = "s"
+            
+        if name == "abbasi" and "tstop" not in kwargs:
+            kwargs["tstop"] = kwargs["time"][-1]
+        
+        kwargs.move_to_end("time_unit")
         
         Model.__init__(self, name, **kwargs)
         
+
         if self.name == "abbasi":
             self.distribution = Distribution("gamma")
             self.__linkattr__("regularity", "k", submodel="distribution")
             self.__linkattr__("regularity", "theta", submodel="distribution", function="theta=1.0/regularity")
             
             self.__linkattr__("mean_rate", "rate", function="rate=rate/rate.mean()*mean_rate")
+            
         elif self.name == "poissonian":
             self.distribution = Distribution("poisson")
             
             self.__linkattr__("mean_rate", "mean", submodel="distribution")
         else:
-            raise NameError(f"Unknown type of Spike Train {self.name}")
+            raise NameError(f"Unknown type of Spike Train {self.name}")        
+        
+        
+        
+    def __setattr__(self, name, value, *args):
+        """
+        Conversion of time units
+        """
+        
+        if name == "time_unit" and hasattr(self, "time_unit"):
+            conversion_factor = SpikeTrain.time_conversion[self.time_unit]/SpikeTrain.time_conversion[value]
+            
+            if hasattr(self, "tstop"):
+                super().__setattr__("tstop", getattr(self, "tstop") * conversion_factor, *args)
+            
+            super().__setattr__("refractory_period", getattr(self, "refractory_period") * conversion_factor, *args)
+                
+            if self.name == "abbasi":
+                super().__setattr__("time", getattr(self, "time") * conversion_factor, *args)
+        
+        super().__setattr__(name, value, *args)
             
             
             

@@ -47,7 +47,7 @@ def _compile(models, links, base, simobj):
             # if there is a mismatch betcompilerween properties, print a warning
             #if not hasattr(real_class, attrname):
                  #raise Warning(f"Property {attrname} not found in class {simobj['object'].__class__.__name__}")
-            #     continue
+           #      continue
         
             if attrname in simobj["submodels"]:                
                 # submodel ?

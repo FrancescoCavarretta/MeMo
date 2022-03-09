@@ -2,23 +2,38 @@
 # -*- coding: utf-8 -*-
 
 class SpikeTrain:
-    def abbasi(self, distribution, time, rate, refractory_period):
-        UnGamma=None
-        Precision=10
-        max_frequency=None
-        min_frequency=None
+    time_conversion = {
+        "tenth_ms":1e-4,
+        "ms":1e-3,
+        "s":1.0,
+        "m":60,
+        "h":3600.0
+        }
+    
+    def abbasi(self, distribution, time, rate, refractory_period, tstop):
+        
+        conversion_factor = SpikeTrain.time_conversion[self.time_unit]
+        tstop *= conversion_factor
+        refractory_period *= conversion_factor
+        time *= conversion_factor
+        
+        UnGamma   =self.UnGamma
+        Precision =self.Precision
+        
+        #max_frequency=None
+        #min_frequency=None
         
         import numpy as np
         
         """ let's test the consistency of the configuration """
-        if max_frequency is None:
-            max_frequency = 1.0/refractory_period
+        #if max_frequency is None:
+        #    max_frequency = 1.0/refractory_period
         
-        if min_frequency is None:
-            min_frequency = 1e-5
+        #if min_frequency is None:
+        #    min_frequency = 1e-5
           
-        assert min_frequency < max_frequency
-        assert max_frequency <= 1.0/refractory_period
+        #assert min_frequency < max_frequency
+        #assert max_frequency <= 1.0/refractory_period
           
         # calculate time bin sizeself._gen_spike_train(*self._args)
         TimeBinSz = time[1] - time[0]
@@ -74,11 +89,18 @@ class SpikeTrain:
         
         # spike times
         SpikeTimes = np.cumsum(ISIs)
-        SpikeTimes = SpikeTimes[SpikeTimes <= time[-1]]
+        SpikeTimes = SpikeTimes[SpikeTimes <= tstop]
+        
+        SpikeTimes /= conversion_factor
+        
         return SpikeTimes
 
     
-    def poissonian(self, distribution, tstop):
+    def poissonian(self, distribution, refractory_period, tstop):
+        conversion_factor = SpikeTrain.time_conversion[self.time_unit]
+        tstop *= conversion_factor
+        refractory_period *= conversion_factor
+        
         import numpy as np
             
         SpikeTimes = np.array([0.])
@@ -87,21 +109,36 @@ class SpikeTrain:
             while True:
                 try:
                     CurrentISI = 1.0 / distribution()
+                    while CurrentISI < refractory_period:
+                        CurrentISI = 1.0 / distribution()
                     break
                 except ZeroDivisionError:
-                    pass
+                    continue
+                
             SpikeTimes = np.concatenate((SpikeTimes, [SpikeTimes[-1] + CurrentISI]))
+        
+        SpikeTimes /= conversion_factor
         
         return SpikeTimes
     
     
     
     def __init__(self, name):
+        self.name = name
         self.product = None
         
+        self.time_unit = "s"
+        
+        if self.name == "abbasi":
+            self.UnGamma = None
+            self.Precision = 10
+            
         self.generation_function = getattr(self, name)
         for x in self.generation_function.__code__.co_varnames[1:self.generation_function.__code__.co_argcount]:
             setattr(self, x, None)
+
+        
+            
             
     def make(self):
         if self.product is None:
@@ -136,33 +173,33 @@ class Distribution:
     
     def __init__(self, seed, name):
         self.name = name
-        params = Distribution.__distribution__[name]
+        self.product = None
         self.seed = seed
-        self.product = getattr(self, params[0])()
-        self.params = params[1:]
+        params = Distribution.__distribution__[name]
+        self.params = params
+        for _param in self.params[1:]:
+            setattr(self, _param, None)  
+        self.make()
         
-        for _param in self.params:
-            setattr(self, _param, None)
-    
+        
     def make(self):
+        if self.product is None:
+            self.product = getattr(self, self.params[0])()
         return self.product
-            
+        
+    
     def __call__(self):
-        return getattr(self.product, self.name)(*[getattr(self, pname) for pname in self.params])
+        return getattr(self.product, self.name)(*[getattr(self, pname) for pname in self.params[1:]])
     
     
     
     
 class Synapse:
     def __init__(self, name):
-        from neuron import h
         self.name = name
-        self.Section = h.Section()
-        self.Exp2Syn = h.Exp2Syn()
-        self.NetCon = h.NetCon(None, None)
-        self.Exp2Syn.loc(0.5, sec=self.Section)
-        self.NetCon.setpost(self.Exp2Syn)
-        self.product = { "Exp2Syn":self.Exp2Syn, "NetCon":self.NetCon }
+        self.product = None
+        self.make()
+        self.gsyn = 0.
         
     @property
     def erev(self):
@@ -172,15 +209,23 @@ class Synapse:
     def erev(self, value):
         self.Exp2Syn.e = value
         
-    @property
-    def gsyn(self):
-        return self.NetCon.weight[0]
-    
-    @gsyn.setter
-    def gsyn(self, value):
-        self.NetCon.weight[0] = value
+    #@property
+    #def gsyn(self):
+    #    return self.NetCon.weight[0]
+    #
+    #@gsyn.setter
+    #def gsyn(self, value):
+    #    self.NetCon.weight[0] = value
         
     def make(self):
+        if self.product is None:
+            from neuron import h
+            self.Section = h.Section()
+            self.Exp2Syn = h.Exp2Syn()
+            #self.NetCon = h.NetCon(None, None)
+            self.Exp2Syn.loc(0.5, sec=self.Section)
+            #self.NetCon.setpost(self.Exp2Syn)
+            self.product = self.Exp2Syn #{ "Exp2Syn":self.Exp2Syn, "NetCon":self.NetCon }
         return self.product
                 
 
@@ -196,13 +241,13 @@ class Population:
         return super().__getattr__(self, name)
     
     def make(self):
-        if self.product:
-            return self.product
-        self.product = []
-        for x in self.__dict__.values():
-            if type(x) == list:
-                for obj in x:
-                    self.product.append(obj.make())
+        if self.product is None:
+            self.product = []
+            for x in self.__dict__.values():
+                if type(x) == list:
+                    for obj in x:
+                        obj.make()
+                        self.product.append(obj)
         return self.product
     
     
@@ -225,17 +270,18 @@ class SpikeTrainToSynapse:
         
         
     def make(self):
-        from neuron import h
-        
-        self.input.make()
-        self.output.make()
-        
-        
-        vec = h.Vector(self.input.product)
-        vs = h.VecStim()
-        vs.play(vec)
-        self.output.NetCon.setpre(vs)
-        self.product = (vec, vs)
+        if self.product is None:
+            from neuron import h
+            
+            self.input.make()
+            self.output.make()
+            
+            self.Vector = h.Vector(self.input.product)
+            self.VecStim = h.VecStim()
+            self.VecStim.play(self.Vector)
+            self.NetCon = h.NetCon(self.VecStim, self.output.product)
+            self.NetCon.weight[0] = self.output.gsyn
+            self.product = { "Vector":self.Vector, "VecStim":self.VecStim, "NetCon":self.NetCon }
         return self.product     
     
     
@@ -247,17 +293,81 @@ class SpikeTrainPopulationToSynapseGroup:
         self.product = None
         
     def make(self):
-        from neuron import h
-        
-        self.input.make()
-        self.output.make()
-        
-        self.product = []
-        n = min([len(self.input.product), len(self.output.product)])
-        for i in range(n):
-            st2syn = SpikeTrainToSynapse()
-            st2syn.input = self.input.product[i]
-            st2syn.output = self.output.product[i]
-            self.product.append(st2syn)
+        if self.product is None:
+            from neuron import h
+            
+            self.input.make()
+            self.output.make()
+            
+            self.product = []
+            n = min([len(self.input.product), len(self.output.product)])
+            for i in range(n):
+                st2syn = SpikeTrainToSynapse()
+                st2syn.input = self.input.product[i]
+                st2syn.output = self.output.product[i]
+                st2syn.make()
+                self.product.append(st2syn)
             
         return self.product      
+
+
+class SynapseToCell:
+    def __init__(self):
+        self.input = None
+        self.output = None
+        self.product = None
+        
+        
+    def make(self):
+        if self.product is None:
+            from neuron import h
+            
+            self.input.make()
+            self.output.make()
+            self.input.product.loc(0.5, sec=self.output.product)
+            self.product = {"Exp2Syn":self.input.product,
+                            "Segment":{"Arc":0.5,
+                                       "Section":self.output.product}}
+        return self.product   
+
+
+class SynapseGroupToCell:
+    def __init__(self):
+        self.input = None
+        self.output = None
+        self.product = None
+        
+        
+    def make(self):
+        if self.product is None:
+            from neuron import h
+            
+            self.input.make()
+            self.output.make()
+            
+            self.product = []
+            
+            for i in range(len(self.input.product)):
+                syn2cell = SynapseToCell()
+                syn2cell.input = self.input.product[i]
+                syn2cell.output = self.output
+                syn2cell.make()
+                self.product.append(syn2cell)
+            
+        return self.product              
+        
+        
+
+    
+    
+class Cell:
+    def __init__(self, name):
+        self.name = name
+        self.product = None
+        
+    def make(self):
+        if self.product is None:
+            from neuron import h
+            self.Section = h.Section(self.name)
+            self.product = self.Section
+        return self.product

@@ -8,6 +8,18 @@ Created on Mon Mar  7 09:37:14 2022
 
 from .model import Model, ModelPopulation
 
+
+class Cell(Model):  
+    def __init__(self, name, **kwargs):    
+        """
+            Representation of a cell
+            name:identifier
+            **kwargs : parameters of the cell
+        """
+        Model.__init__(self, name, **kwargs)
+    
+    
+    
 class Synapse(Model):
     def __init__(self, name, **kwargs):    
         """
