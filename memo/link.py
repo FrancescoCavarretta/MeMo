@@ -107,8 +107,11 @@ class Link:
         
         # execute the function
         self.__function(self.input, self.output)
+
+
+
         
-            
+          
 
 if __name__ == "__main__":
     from model import Model

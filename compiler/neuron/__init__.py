@@ -324,10 +324,11 @@ class SynapseToCell:
             
             self.input.make()
             self.output.make()
-            self.input.product.loc(0.5, sec=self.output.product)
+            isec = 0
+            self.input.product.loc(self.output.product[isec].x, sec=self.output.product[isec].sec)
             self.product = {"Exp2Syn":self.input.product,
-                            "Segment":{"Arc":0.5,
-                                       "Section":self.output.product}}
+                            "Segment":{"Arc":self.output.product[isec].x,
+                                       "Section":self.output.product[isec].sec}}
         return self.product   
 
 
@@ -369,5 +370,6 @@ class Cell:
         if self.product is None:
             from neuron import h
             self.Section = h.Section(self.name)
-            self.product = self.Section
+            self.Section.nseg = 50
+            self.product = [ seg for seg in self.Section.allseg() ]
         return self.product
