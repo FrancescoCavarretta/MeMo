@@ -1,8 +1,8 @@
-import memo
-import memo.model as model
-import memo.link as link
-import memo.microcircuit as microcircuit
-import memo.distribution as distribution
+from .. import memo
+from ..memo import model
+from ..memo import link
+from ..memo import microcircuit
+from ..memo import distribution
 
 
 # set of random object which requires a seed assignment

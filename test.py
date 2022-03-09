@@ -2,18 +2,19 @@
         
         
         
-import compiler.neuron as base
+import sim.compiler.neuron as base
 
-import compiler.precompiler as precompiler
+import sim.compiler.precompiler as precompiler
+import sim.compiler as compiler
 
-import memo.spiketrain as st
-import memo.distribution as ds
-import memo.microcircuit as mc
-import memo.neuron as nrn
-import memo.link as ln
+import sim.memo.spiketrain as st
+import sim.memo.distribution as ds
+import sim.memo.microcircuit as mc
+import sim.memo.neuron as nrn
+import sim.memo.link as ln
 
-import compiler
-import compiler.neuron.util.recorder as recorder
+import sim.compiler
+import sim.compiler.neuron.util.recorder as recorder
 
 
 mc1 = mc.MicroCircuit("Test")
