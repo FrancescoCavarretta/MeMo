@@ -27,12 +27,30 @@ class Synapse(Model):
             name:identifier
             **kwargs : parameters of the synapse
         """
-        # add conductance
-        if "gsyn" not in kwargs:
-            kwargs["gsyn"] = 0.
-            
-        if "erev" not in kwargs:
-            kwargs["erev"] = 0.
+        if name == "AmpaNmda":
+            # add conductance
+            if "gsyn_ampa" not in kwargs:
+                kwargs["gsyn_ampa"] = 0.
+                
+            if "gsyn_nmda" not in kwargs:
+                kwargs["gsyn_nmda"] = 0.
+                
+            if "erev" not in kwargs:
+                kwargs["erev"] = 0.
+
+            if "tau" not in kwargs:
+                kwargs["tau"] = 3.        
+
+        else:
+            # add conductance
+            if "gsyn" not in kwargs:
+                kwargs["gsyn"] = 0.
+                
+            if "erev" not in kwargs:
+                kwargs["erev"] = -75.
+
+            if "tau" not in kwargs:
+                kwargs["tau"] = 6.        
             
         Model.__init__(self, name, **kwargs)
         

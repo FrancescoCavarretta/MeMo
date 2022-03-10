@@ -1,7 +1,7 @@
 :  Vector stream of events
 
 NEURON {
-	ARTIFICIAL_CELL VecStim
+	ARTIFICIAL_CELL MeMo_VecStim
 	POINTER ptr
 }
 

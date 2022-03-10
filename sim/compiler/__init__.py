@@ -40,6 +40,11 @@ def _compile(models, links, base, simobj):
         real_class_name = simobj["object"].__class__.__name__
         
         # create the class
+        if not hasattr(base, real_class_name):
+            real_class_name = "SimObject" if simobj["is_population"] else "Population"
+                
+
+        # create the class
         real_class = getattr(base, real_class_name)(*init_params)
         
         # copy all the attributes
@@ -96,7 +101,7 @@ def _compile(models, links, base, simobj):
     return simobj["real_simobj"]
 
 
-def compile(sim, base):
+def compile(sim, base_mech=None):
     """
     Compile a simulation
 
@@ -105,11 +110,16 @@ def compile(sim, base):
     sim : map
     {precompiled simulation, with seed assignment}
     """
+
+    if base_mech is None:
+        from .neuron import base
+        base_mech = base
+    
     for simobj in sim["models"].values():
-        _compile(sim["models"], sim["links"], base, simobj) 
+        _compile(sim["models"], sim["links"], base_mech, simobj) 
     
     for simobj in sim["links"].values():
-        _compile(sim["models"], sim["links"], base, simobj)
+        _compile(sim["models"], sim["links"], base_mech, simobj)
         
     # let create the instance
     for simobj in sim["links"].values():

@@ -94,31 +94,38 @@ class Model:
         value : Str
             Value of the attribute
         """
-        
-        # check whether it is new
-        new_attrs_flag = not hasattr(self, name)
 
-        # update the attribute
-        super().__setattr__(name, value)
+        pname = lambda x : self.name + "." + x if type(x) != tuple else x[0].name + "." + x[1]
         
-        # if it is "__model_attrs__, just return
-        if name == "__model_attrs__":
+        # if it is "__model_attrs__ or name, just set and return
+        if name == "name" or name == "__model_attrs__":
+            super().__setattr__(name, value)
             return
-        
+
+        # check whether it is new
+        if not hasattr(self, name):
+            super().__setattr__(name, value)
+            self.__model_attrs__[name] = {}
+            return
+                    
+            
+
         # base of the eventual recursion
         # name is fixed at the initialization so it does not make problems
         if len(args) > 0:
             # check the recursion
             if (self.name + "." + name) in args:
-                return  
-            
+                return
+        
         # list of set attributes
         args += ((self.name + "." + name), )
                 
-        # create the entry
-        if new_attrs_flag and name not in self.__model_attrs__:
-            self.__model_attrs__[name] = {}      
         
+        super().__setattr__(name, value)
+
+        # to avoid recursion, we store the name directly
+    
+
         # if the attribute is an attribute of the model
         for attrdest_ref, function in self.__model_attrs__[name].items():
             
@@ -132,7 +139,7 @@ class Model:
                 
             # if there is a map function
             if function:
-                try:
+                #try:
                     if isinstance(function, str):
                         # interpret the string, 
                         # which is a chunk of python code
@@ -152,21 +159,30 @@ class Model:
                     elif callable(function):
                         # it is a function
                         # read the parameters of the function
-                        value = function(*[
-                            getattr(self, varname) for varname in function.__code__.co_varnames[:self.generation_function.__code__.co_argcount]
-                            ])
+                        value = function(*([self]+[
+                            getattr(self, varname) for varname in function.__code__.co_varnames[1:function.__code__.co_argcount]
+                            ]))
+                        # nothing to change
+                        if value is None:
+                            return 
                         
                     else:
                         raise ValueError(f"The link for variable {name} was not properly defined (2)")
-                except:
-                    raise Exception(f"The link for variable {name} was not properly defined: an error occurred while running its map function")
+                #except:
+                #    raise Exception(f"The link for variable {name} was not properly defined: an error occurred while running its map function")
 
+
+            _pnames = set([pname(x) for x in self.__model_attrs__[name].keys()])
+            _pnames.remove(pname(attrdest_ref))
+            _pnames = _pnames.union(args)
+            _pnames = tuple(_pnames)
+            #print (_pnames, args)
             
             # update the value
             # there is a risk of recursion at this point
             # rink of infinite recursion
             # ---> setattr(output_model, attrdest, value) <---
-            output_model.__setattr__(attrdest, value, *args)
+            output_model.__setattr__(attrdest, value, *_pnames) #args)
                       
                 
     def __linkattr__(self, attrsrc, attrdest, **kwargs):
@@ -194,8 +210,12 @@ class Model:
         # perform two checks
         if "submodel" in kwargs:       
             # retrieve the model
-            submodel = getattr(self, kwargs["submodel"])
+            submodel = kwargs["submodel"]
             
+            # if it is a string, we need to retrieve it
+            if type(submodel) == str:
+                submodel = getattr(self, submodel)
+
             # which should have also that attribute
             assert isinstance(submodel, Model) and \
                 hasattr(submodel, attrdest)
@@ -219,8 +239,9 @@ class Model:
         # create the link(s)
         for _attrsrc in attrsrc:
             # source attribute existing
-            assert _attrsrc in self.__model_attrs__
-        
+            if _attrsrc not in self.__model_attrs__:
+                self.__setattr__(_attrsrc, getattr(attrdest[0], attrdest[1]) if type(attrdest) == tuple else getattr(self, attrdest))
+                
             # add the link
             self.__model_attrs__[_attrsrc][attrdest] = function            
             
@@ -265,7 +286,6 @@ class ModelPopulation(Model):
             Iterator
         """
         params = list(self.__model_attrs__.keys())
-        del params[params.index("name")]
         i = 0
         while i < len(params):
             if params[i].startswith("n_"):

@@ -178,7 +178,7 @@ class Distribution:
         params = Distribution.__distribution__[name]
         self.params = params
         for _param in self.params[1:]:
-            setattr(self, _param, None)  
+            setattr(self, _param, None)
         self.make()
         
         
@@ -190,8 +190,41 @@ class Distribution:
     
     def __call__(self):
         return getattr(self.product, self.name)(*[getattr(self, pname) for pname in self.params[1:]])
+
     
+class SimObject:
+    def __init__(self, seed, name):
+        self.name = name
+        self.product = None
+        self.make()
+        
+        
+    def make(self):
+        if self.product is None:
+            self.product = []
+            for x in p.__dict__.values():
+
+                if type(x) == list:
+                    tmp = []
+                    for _x in x:
+                        if isinstance(_x, type):
+                            tmp.append(_x.make())
+                    if len(tmp) == 0:
+                        continue
+                elif isinstance(x, type):
+                    tmp = x.make()
+                else:
+                    continue
+
+                self.product.append(tmp)
+                
+            if len(self.product) == 1:
+                self.product = self.product[0]
+        return self.product
+        
     
+    def __call__(self):
+        return getattr(self.product, self.name)(*[getattr(self, pname) for pname in self.params[1:]])
     
     
 class Synapse:
@@ -199,33 +232,78 @@ class Synapse:
         self.name = name
         self.product = None
         self.make()
-        self.gsyn = 0.
+        
+    @property
+    def tau(self):
+        if self.name == "AmpaNmda":
+            return getattr(self, self.name).ampatau
+        else:
+            return getattr(self, self.name).tau
+    
+    @tau.setter
+    def tau(self, value):
+        if self.name == "AmpaNmda":
+            getattr(self, self.name).ampatau = value
+        else:
+            getattr(self, self.name).tau = value
+
+    @property
+    def tau1(self):
+        return getattr(self, self.name).tau1
+    
+    @tau1.setter
+    def tau1(self, value):
+        getattr(self, self.name).tau1 = value
+
+    @property
+    def tau2(self):
+        return getattr(self, self.name).tau2
+    
+    @tau2.setter
+    def tau2(self, value):
+        getattr(self, self.name).tau2 = value
         
     @property
     def erev(self):
-        return self.Exp2Syn.e
+        return getattr(self, self.name).e
     
     @erev.setter
     def erev(self, value):
-        self.Exp2Syn.e = value
+        getattr(self, self.name).e = value
         
-    #@property
-    #def gsyn(self):
-    #    return self.NetCon.weight[0]
-    #
-    #@gsyn.setter
-    #def gsyn(self, value):
-    #    self.NetCon.weight[0] = value
-        
+    @property
+    def gsyn(self):
+        return getattr(self, self.name).g_max
+    
+    @gsyn.setter
+    def gsyn(self, value):
+        getattr(self, self.name).g_max = value
+
+    @property
+    def gsyn_nmda(self):
+        return getattr(self, self.name).gnmda_max
+    
+    @gsyn_nmda.setter
+    def gsyn_nmda(self, value):
+        getattr(self, self.name).gnmda_max = value
+
+    @property
+    def gsyn_ampa(self):
+        return getattr(self, self.name).gampa_max
+    
+    @gsyn_ampa.setter
+    def gsyn_ampa(self, value):
+        getattr(self, self.name).gampa_max = value
+    
     def make(self):
         if self.product is None:
             from neuron import h
             self.Section = h.Section()
-            self.Exp2Syn = h.Exp2Syn()
-            #self.NetCon = h.NetCon(None, None)
-            self.Exp2Syn.loc(0.5, sec=self.Section)
-            #self.NetCon.setpost(self.Exp2Syn)
-            self.product = self.Exp2Syn #{ "Exp2Syn":self.Exp2Syn, "NetCon":self.NetCon }
+            setattr(self, self.name, getattr(h, "MeMo_" + self.name)())
+
+            getattr(self, self.name).loc(0.5, sec=self.Section)
+
+            self.product = getattr(self, self.name) #{ "ExpSyn":self.ExpSyn, "NetCon":self.NetCon }
         return self.product
                 
 
@@ -277,10 +355,10 @@ class SpikeTrainToSynapse:
             self.output.make()
             
             self.Vector = h.Vector(self.input.product)
-            self.VecStim = h.VecStim()
+            self.VecStim = h.MeMo_VecStim()
             self.VecStim.play(self.Vector)
             self.NetCon = h.NetCon(self.VecStim, self.output.product)
-            self.NetCon.weight[0] = self.output.gsyn
+            #self.NetCon.weight[0] = self.output.gsyn
             self.product = { "Vector":self.Vector, "VecStim":self.VecStim, "NetCon":self.NetCon }
         return self.product     
     
@@ -326,7 +404,7 @@ class SynapseToCell:
             self.output.make()
             isec = 0
             self.input.product.loc(self.output.product[isec].x, sec=self.output.product[isec].sec)
-            self.product = {"Exp2Syn":self.input.product,
+            self.product = {self.input.name:self.input.product,
                             "Segment":{"Arc":self.output.product[isec].x,
                                        "Section":self.output.product[isec].sec}}
         return self.product   

@@ -96,6 +96,7 @@ def _mk_simobject(x, seedgen, models, links):
         if isinstance(x, link.Link):
             # it is a link
             ret["is_link"] = True
+            ret["is_population"] = False
             
             # link input and output models
             ret["input"]  = _mk_simobject(x.input, seedgen, models, links)
@@ -105,8 +106,9 @@ def _mk_simobject(x, seedgen, models, links):
             
             # add the link
             links[x] = ret
-        elif isinstance(x, link.Model):
+        elif isinstance(x, model.Model):
             ret["is_link"] = False
+            ret["is_population"] = isinstance(x, model.ModelPopulation)
             
             # add the model
             models[x] = ret
