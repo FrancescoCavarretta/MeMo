@@ -2,25 +2,112 @@ import sim.memo.model as model
 import sim.memo.link as link
 import sim.memo.neuron as nrn
 import sim.memo.spiketrain as stn
+import sim.memo.distribution as distr
 
 import sim.compiler.precompiler as precompiler
 import sim.compiler as compiler
 import sim.compiler.neuron as base
+import sim.compiler.neuron.util.recorder as rec
 
 import sim.memo.microcircuit as mc
 
-   
+import sim.memo.neuron as nrn
+
+import mkcell
+
+import mkmodules
+
+from neuron import h
+
+import pandas as pd
+
+
+import matplotlib.pyplot as plt
+
+mkmodules.mk_mod_files()
+
+
+
+    
+
+
+class Cell:
+  def __init__(self, name):
+    self.name = name
+    self.bpo_cell = mk_cell_model(0)
+    self.cell = self.bpo_cell.icell
+    self.morph_table, self.section = Cell.bpo2memo_cell(self.bpo_cell)
+    self.product = { "Cell":self.section, "MorphologyTable":self.morph_table }
+
+
+  def make(self):            
+      return self.product
+      
+
+  def bpo2memo_cell(bpo_cell):
+    from neuron import h
+    section_collection = {}
+    h.distance(sec=bpo_cell.icell.soma[0])
+    tab = pd.DataFrame(columns=["type", "segment", "name", "number", "diam", "len", "dist"])
+    for section_type in bpo_cell.seclist_names:
+      section_collection[section_type] = {}
+      if section_type != "all":
+        for section in getattr(bpo_cell.icell, section_type):
+          section_number = int(h.secname(sec=section).split("[")[-1].replace("]", ""))
+          section_collection[section_type][section_number] = section
+          for segment in section.allseg():
+            tab = tab.append({ "type":section_type,
+                               "segment":segment.x,
+                               "name":section,
+                               "number":section_number,
+                               "diam":segment.diam,
+                               "len":section.L / section.nseg,
+                               "dist":h.distance(segment.x, sec=section) },
+                             ignore_index=True)
+            
+    tab["segment"] = tab["segment"].astype(float)
+    tab["dist"] = tab["dist"].astype(float)
+    tab["len"] = tab["len"].astype(float)
+    tab["number"] = tab["number"].astype(int)
+    return tab, section_collection
+
+
+  def get(self, target_feature=None, min_value=None, max_value=None, section_type="basal"):
+    f = self.morph_table
+    if section_type:
+      f = f[f["type"]==section_type]
+    if target_feature:
+      if min_value:
+        f = f[f[target_feature] > min_value]
+      if max_value:
+        f = f[f[target_feature] < max_value]
+    f = f[[ 'type', 'number', 'segment' ]]
+    return [self.section[x["type"]][x["number"]](x["segment"]) for k, x in f.iterrows()]
+      
+
+def load_params(filename):
+  import numpy as np
+  return sorted(np.load(filename, allow_pickle=True).tolist().items())
+
+
+def mk_cell_model(cellid, control=True):
+  filename = "test_model_" + ("control" if control else "lesioned") + "_edyta_test.npy"
+  param = load_params(filename)[cellid][1][0]
+  etype=("control" if control else "lesioned") + "_BK_short_AP"
+  return mkcell.mk_cell_model(param, etype=etype)
+
+
 class SynapticInputs(nrn.Model):
   def __init__(self, name, syn, spktr):
     model.Model.__init__(self, name)
     self.syn = nrn.SynapseGroup("syn", syn=syn)
     self.spktr = stn.SpikeTrainPopulation("spktr", spktr=spktr)
-    self.l = link.Link(spktr, syn)
+    self.l = link.Link(self.spktr, self.syn)
     
     self.n = 1
     
-    self.__linkattr__("n", "n_syn")
-    self.__linkattr__("n", "n_spktr")
+    self.__linkattr__("n", "n_syn", submodel=self.syn)
+    self.__linkattr__("n", "n_spktr", submodel=self.spktr)
     self.__linkattr__("erev", "erev", submodel=self.syn.syn)
 
     if hasattr(self.syn.syn, "gsyn"):
@@ -97,9 +184,46 @@ iinh = SynapticInputs("inhibitors", bgSyn, stn.SpikeTrain("poissonian", mean_rat
 i2t = InputToThalamus("test1", idrv, imod, iinh)
 
 
+base.Cell = Cell
+
+
+c = nrn.Cell("TC")
+
+
+drv_ln = link.Link(i2t.drivers.syn, c,
+                    distribution=distr.Distribution("uniform"),
+                    target=("dist", "basal", 0, 150))
+
+mod_ln = link.Link(i2t.modulators.syn, c,
+                    distribution=distr.Distribution("uniform"),
+                    target=("dist", "basal", 150, None))
+
+bg_ln = link.Link(i2t.inhibitors.syn, c,
+                    distribution=distr.Distribution("uniform"),
+                    target=("dist", "basal", 50, 200))
+
+
 mc1 = mc.MicroCircuit("Test")
 mc1.add(i2t)
+mc1.add(c)
+mc1.add(bg_ln)
+mc1.add(mod_ln)
+mc1.add(drv_ln)
+
+i2t.n_total=10
+i2t.gsyn_ampa_drivers = 0.01
+i2t.gsyn_ampa_modulators = 0.01
+i2t.gsyn_inhibitors = 0.01
 
 
 r = precompiler.precompile(mc1, (0, 5))
 compiler.compile(r, base)
+
+rr = rec.Recorder(r["models"][c]["real_simobj"].section["somatic"][0](0.5))
+
+h.load_file("stdgui.hoc")
+h.tstop = 5000.0
+h.run(5000.0)
+data = rr.get()
+plt.plot(data[:,0], data[:,1])
+plt.show()
