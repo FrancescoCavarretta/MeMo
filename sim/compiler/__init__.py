@@ -46,6 +46,7 @@ def _compile(models, links, base, simobj):
 
         # create the class
         real_class = getattr(base, real_class_name)(*init_params)
+
         
         # copy all the attributes
         for attrname in simobj["object"]:
@@ -87,10 +88,24 @@ def _compile(models, links, base, simobj):
         # create the class
         real_class = getattr(base, real_class_name)(*init_params)
         
-        # create the class
-        real_class = getattr(base, real_class_name)(*init_params)
         real_class.input = _compile(models, links, base, input)
         real_class.output = _compile(models, links, base, output)
+        
+        # set the filter attribute for the target on the output object
+        if hasattr(simobj["object"], "target_feature"):
+            for _attrname in [ "target_feature", "section_type", "min_value", "max_value" ]:
+                setattr(real_class, _attrname, getattr(simobj["object"], _attrname))
+
+        # set distribution
+        if "distribution" in simobj["submodels"]:
+            attrval_tmp = simobj["submodels"]["distribution"]
+            if type(attrval_tmp) == list:
+                attrval = [ _compile(models, links, base, _attrval_tmp) for _attrval_tmp in  attrval_tmp ]
+                
+            else:
+                attrval = _compile(models, links, base, attrval_tmp)
+
+            setattr(real_class, "distribution", attrval)
             
         return real_class
     

@@ -358,7 +358,6 @@ class SpikeTrainToSynapse:
             self.VecStim = h.MeMo_VecStim()
             self.VecStim.play(self.Vector)
             self.NetCon = h.NetCon(self.VecStim, self.output.product)
-            #self.NetCon.weight[0] = self.output.gsyn
             self.product = { "Vector":self.Vector, "VecStim":self.VecStim, "NetCon":self.NetCon }
         return self.product     
     
@@ -394,6 +393,8 @@ class SynapseToCell:
         self.input = None
         self.output = None
         self.product = None
+        self.distribution = None
+        self.target_feature, self.section_type, self.min_value, self.max_value = None, None, None, None
         
         
     def make(self):
@@ -402,11 +403,13 @@ class SynapseToCell:
             
             self.input.make()
             self.output.make()
-            isec = 0
-            self.input.product.loc(self.output.product[isec].x, sec=self.output.product[isec].sec)
-            self.product = {self.input.name:self.input.product,
-                            "Segment":{"Arc":self.output.product[isec].x,
-                                       "Section":self.output.product[isec].sec}}
+            
+            targets = self.output.get(target_feature=self.target_feature, min_value=self.min_value, max_value=self.max_value, section_type=self.section_type)
+            segment = targets[int(self.distribution() * len(targets))]
+            self.input.product.loc(segment.x, sec=segment.sec)
+            self.product = { self.input.name:self.input.product,
+                            "Segment":{"Arc":segment.x,
+                                       "Section":segment.sec}}
         return self.product   
 
 
@@ -415,7 +418,8 @@ class SynapseGroupToCell:
         self.input = None
         self.output = None
         self.product = None
-        
+        self.distribution = None
+        self.target_feature, self.section_type, self.min_value, self.max_value = None, None, None, None
         
     def make(self):
         if self.product is None:
@@ -425,9 +429,11 @@ class SynapseGroupToCell:
             self.output.make()
             
             self.product = []
-            
             for i in range(len(self.input.product)):
                 syn2cell = SynapseToCell()
+                if self.distribution:
+                    syn2cell.distribution = self.distribution[i]
+                    syn2cell.target_feature, syn2cell.section_type, syn2cell.min_value, syn2cell.max_value = self.target_feature, self.section_type, self.min_value, self.max_value
                 syn2cell.input = self.input.product[i]
                 syn2cell.output = self.output
                 syn2cell.make()
@@ -446,8 +452,5 @@ class Cell:
         
     def make(self):
         if self.product is None:
-            from neuron import h
-            self.Section = h.Section(self.name)
-            self.Section.nseg = 50
-            self.product = [ seg for seg in self.Section.allseg() ]
+            raise Warning("Cell model not translated")
         return self.product

@@ -13,8 +13,9 @@ class MicroCircuit:
     def add(self, x):
         if isinstance(x, Link):
             self.links.add(x)
-            self.add(x.input)
-            self.add(x.output)
+            self.models.add(x.input)
+            self.models.add(x.output)
+            
         elif isinstance(x, Model):
             self.models.add(x)
         else:

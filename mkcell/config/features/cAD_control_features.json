@@ -1,0 +1,80 @@
+{
+    "Step200_2000ms": {
+        "soma.v": [
+            { "feature": "AP_amplitude", "val": [ 76.47277831484253, 6.202818183461212 ], "n": 4.0, "weight": 0.5 },
+            { "feature": "AHP_depth", "val": [ 7.9185771944600045, 4.073634507439067 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "AP_width", "val": [ 1.1250000000002558, 0.0957427107756556 ], "n": 4.0, "weight": 0.1 },
+            { "feature": "AP_count", "val": [ 7.5, 5.066228051190222 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "time_to_first_spike", "val": [ 17.225000000117262, 5.377964298878633 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "inv_first_ISI", "val": [ 26.549411391490978, 17.938766261739936 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "inv_second_ISI", "val": [ 20.923555291281367, 17.707986871922742 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "inv_last_ISI", "val": [ 8.110681788214153, 4.141448789923622 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "adaptation_index2", "val": [ -0.019854760868385057, 0.2220510052731653 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "clustering_index", "val": [ 1.0, 0.025 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "voltage_base", "val": [ -71.69819755554217, 1.4340643580811931 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "voltage_after_stim", "val": [ -74.48389252377683, 3.150384398439775 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "AP1_peak", "val": [ 27.05549316276407, 5.6572462042874525 ], "n": 4.0, "weight": 0.5 },
+            { "feature": "AP2_peak", "val": [ 27.799359129783856, 4.9506305743525765 ], "n": 4.0, "weight": 0.5 },
+            { "feature": "AP_count_before_stim", "val": [ 0, 0.001 ], "weight": 1.0, "n": 0 }
+        ]
+    },
+    "Step240_2000ms": {
+        "soma.v": [
+            { "feature": "AP_amplitude", "val": [ 77.05642699742718, 8.297726826809253 ], "n": 4.0, "weight": 0.5 },
+            { "feature": "AHP_depth", "val": [ 8.387537002820928, 5.081562276078854 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "AP_width", "val": [ 1.1000000000002501, 0.1154700538379514 ], "n": 4.0, "weight": 0.1 },
+            { "feature": "AP_count", "val": [ 17.5, 7.14142842854285 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "time_to_first_spike", "val": [ 9.850000000115585, 1.61348484137116 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "inv_first_ISI", "val": [ 45.22323970253775, 20.34390365185872 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "inv_second_ISI", "val": [ 36.03419531426518, 17.012325722173323 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "inv_last_ISI", "val": [ 4.463736782774726, 5.769406468612967 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "adaptation_index2", "val": [ 0.07525396085946873, 0.0360396848513967 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "clustering_index", "val": [ 0.9382309941520467, 0.04760450337767528 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "AP1_peak", "val": [ 26.818981932472887, 6.18930918461742 ], "n": 4.0, "weight": 0.5 },
+            { "feature": "AP2_peak", "val": [ 27.25004272359466, 4.430646753237557 ], "n": 4.0, "weight": 0.5 }
+        ]
+    },
+    "Step280_2000ms": {
+        "soma.v": [
+            { "feature": "AP_amplitude", "val": [ 82.9539489711559, 3.9382926693882543 ], "n": 4.0, "weight": 0.5 },
+            { "feature": "AHP_depth", "val": [ 8.96794319169173, 5.893164670025874 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "AP_width", "val": [ 1.1250000000002558, 0.1258305739212078 ], "n": 4.0, "weight": 0.1 },
+            { "feature": "AP_count", "val": [ 26.25, 16.879474715365603 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "time_to_first_spike", "val": [ 7.300000000115006, 1.9493588689622359 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "inv_first_ISI", "val": [ 60.664743345536365, 20.289188124975883 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "inv_second_ISI", "val": [ 43.306513732409854, 20.64285587056857 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "inv_last_ISI", "val": [ 11.972482391629764, 7.141266278449578 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "adaptation_index2", "val": [ 0.041945848073656075, 0.024449872258992193 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "clustering_index", "val": [ 0.8791666666666667, 0.15833333333333335 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "AP1_peak", "val": [ 27.166119383788292, 5.236564680126602 ], "n": 4.0, "weight": 0.5 },
+            { "feature": "AP2_peak", "val": [ 26.563397216215122, 3.960047747117872 ], "n": 4.0, "weight": 0.5 }
+        ]
+    },
+    "SagStep-200_2000ms": {
+        "soma.v": [
+            { "feature": "voltage_base", "val": [ -81.76662750244142, 5.497925895518083 ], "n": 5.0, "weight": 1.0 },
+            { "feature": "sag_ratio3", "val": [ 6.723231943145764, 2.2256282142531774 ], "n": 5.0, "weight": 1.0 },
+            { "feature": "sag_deflection", "val": [ 36.028671264648366, 9.06526851338742 ], "n": 5.0, "weight": 1.0 },
+            { "feature": "AP1_amp_after_stim", "val": [ 84.01824948383576, 8.725337078653578 ], "n": 4.0, "weight": 0.5 },
+            { "feature": "AP2_amp_after_stim", "val": [ 59.10064698887915, 6.009803419049243 ], "n": 2.0, "weight": 0.5 },
+            { "feature": "time_to_first_spike_after_stim", "val": [ 1078.4249999988374, 35.06663894165558 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "AHP_depth_after_stim", "val": [ 57.81951692731677, 10.455432113664212 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "AP_count_after_stim", "val": [ 1.6, 1.140175425099138 ], "n": 5.0, "weight": 1.0 },
+            { "feature": "inv_first_ISI_after_stim", "val": [ 60.17316017321491, 85.33191198857772 ], "n": 5.0, "weight": 1.0 },
+            { "feature": "inv_second_ISI_after_stim", "val": [ 22.22222222224243, 49.69039950004051 ], "n": 5.0, "weight": 1.0 },
+            { "feature": "inv_last_ISI_after_stim", "val": [ 46.0317460317879, 63.093990204348785 ], "n": 5.0, "weight": 1.0 },
+            { "feature": "voltage_after_stim", "val": [ -79.7488278364925, 5.932367777512678 ], "n": 5.0, "weight": 1.0 },
+            { "feature": "AP_count_before_stim", "val": [ 0, 0.001 ], "weight": 1.0, "n": 0 }
+        ]
+    },
+    "Step_2000ms": {
+        "soma.v": [
+            { "feature": "input_resistance", "val": [ 273.7045288085932, 125.20809095389434 ], "n": 5.0, "weight": 1.0 }
+        ]
+    },
+    "Pulse": {
+        "soma.v": [
+            { "feature": "decay_time_constant_after_stim2", "val": [ 20.69, 10.27 ], "weight": 1 }
+        ]
+    }
+}

@@ -23,7 +23,7 @@ class Distribution(Model):
         },
         "uniform":{
             ("a", "b"):dict(mean="mean=(a+b)/2", var="var=1/12*(b-a)**2"),
-            ("mean", "var"):dict(b="b=sqrt(3*var)+2*mean", a="a=2*mean-b"),
+            ("mean", "var"):dict(b="import math\nb=math.sqrt(3*var)+mean", a="a=2*mean-b"),
             ("mean", "std"):("mean", "var"),
             None:dict(a=0, b=1)
         },
@@ -149,11 +149,9 @@ class Distribution(Model):
         except KeyError:
             raise ValueError(f"Combination of parameters not recognized for the distribution {self.name} not known: {kwargs.keys()} {distrlinks}")
         
-        
         # map the other parameters
         for attrsrc in list(distrlinks.keys()):
-            set_map_attrs(attrsrc, distrlinks)
-            
+            set_map_attrs(attrsrc, distrlinks)           
  
 
 if __name__ == "__main__":

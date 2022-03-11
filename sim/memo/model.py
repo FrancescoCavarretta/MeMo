@@ -11,13 +11,15 @@ class Model:
             self.__filter_out = filter_out
             
         def __next__(self):
+            from .link import Link
+            
             while self.__index < len(self.__params)-1:
                 self.__index += 1
                 
                 pname = self.__params[self.__index]
                 pval = getattr(self.__model, pname)
                 if pname not in self.__filter_out and \
-                    (not self.__models_only or self.__models_only and isinstance(pval, Model)):
+                    (not self.__models_only or self.__models_only and isinstance(pval, (Model, Link))):
                     return pname 
                 
             raise StopIteration
@@ -277,7 +279,8 @@ class Model:
         return self.copy(deep=deep)
     
 
-
+    def __len__(self):
+        return 1
 
 class ModelPopulation(Model):    
     
@@ -343,7 +346,16 @@ class ModelPopulation(Model):
                 super().__setattr__(nattrname, 1, *args)
             
         
-        
+
+    def __len__(self):
+        """
+        Return the number of elements
+        """
+        n = 0
+        for x in self.__model_attrs__.keys():
+            if x.startswith("n_"):
+                n += getattr(self, x)
+        return n        
             
             
             

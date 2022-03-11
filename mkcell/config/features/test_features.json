@@ -1,0 +1,216 @@
+{
+    "ReboundStep-300_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_deflection", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+            
+        ]
+    },
+    "ReboundStep-250_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_deflection", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "ReboundStep-200_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_deflection", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "ReboundStep-150_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_deflection", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "ReboundStep-100_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_deflection", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "ReboundStep-50_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_deflection", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "ReboundStep-300_500ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_deflection", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "ReboundStep-250_500ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_deflection", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "ReboundStep-200_500ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_deflection", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "ReboundStep-150_500ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_deflection", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "ReboundStep-100_500ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_deflection", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "ReboundStep-50_500ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_deflection", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "ReboundStep-300_200ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_deflection", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "ReboundStep-250_200ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_deflection", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "ReboundStep-200_200ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_deflection", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "ReboundStep-150_200ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_deflection", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "ReboundStep-100_200ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_deflection", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "ReboundStep-50_200ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_deflection", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "AP_count_before_stim", "val": [ 0, 1 ], "weight": 1.0, "n": 0 },
+            { "feature": "voltage_base", "val": [ -69, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "SagStep-200_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_ratio3", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "SagStep-150_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_ratio3", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "SagStep-100_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_ratio3", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "SagStep-50_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count_after_stim", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "sag_ratio3", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "AP_count_before_stim", "val": [ 0, 1 ], "weight": 1.0, "n": 0 },
+            { "feature": "voltage_base", "val": [ -69, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "Step300_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "Step280_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "Step260_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "Step240_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "Step220_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "Step200_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "Step180_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "Step160_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "Step140_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "Step120_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "Step100_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "Step80_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "Step60_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "Step40_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count", "val": [ 0, 1 ], "n": 0, "weight": 1 }
+        ]
+    },
+    "Step20_2000ms": {
+        "soma.v": [
+            { "feature": "AP_count", "val": [ 0, 1 ], "n": 0, "weight": 1 },
+            { "feature": "AP_count_before_stim", "val": [ 0, 1 ], "weight": 1.0, "n": 0 },
+            { "feature": "voltage_base", "val": [ -69, 1 ], "n": 0, "weight": 1 }
+        ]
+    }
+}

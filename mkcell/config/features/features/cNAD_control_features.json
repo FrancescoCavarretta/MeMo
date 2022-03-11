@@ -1,0 +1,78 @@
+{
+    "Step100_2000ms": {
+        "soma.v": [
+            { "feature": "AP_amplitude", "val": [ 68.49624633650697, 8.496048213696762 ], "n": 4.0, "weight": 0.5 },
+            { "feature": "AHP_depth", "val": [ 7.043088420271273, 6.034623262828561 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "AP_width", "val": [ 0.47500000000002274, 0.23629078131276837 ], "n": 4.0, "weight": 0.1 },
+            { "feature": "AP_count", "val": [ 15.75, 10.21028892833107 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "time_to_first_spike", "val": [ 203.34999999994747, 352.1767974562207 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "inv_first_ISI", "val": [ 17.294305389538213, 9.072798393434557 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "inv_second_ISI", "val": [ 17.563684793576517, 10.062837104637882 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "inv_last_ISI", "val": [ 12.099788368150517, 7.7506553849989706 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "adaptation_index2", "val": [ -0.0169814821134, 0.06287620427022465 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "clustering_index", "val": [ 0.5916666666666667, 0.19696775445817596 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "voltage_base", "val": [ -70.77700061798083, 4.215536343025037 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "voltage_after_stim", "val": [ -72.76998867690108, 3.7989915524054134 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "AP_count_before_stim", "val": [ 0, 0.001 ], "weight": 1.0, "n": 0 }
+        ]
+    },
+    "Step160_2000ms": {
+        "soma.v": [
+            { "feature": "AP_amplitude", "val": [ 69.14474487094411, 11.049459233835217 ], "n": 4.0, "weight": 0.5 },
+            { "feature": "AHP_depth", "val": [ 7.68036193475332, 7.51082997421253 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "AP_width", "val": [ 0.5000000000001137, 0.43204937989395553 ], "n": 4.0, "weight": 0.1 },
+            { "feature": "AP_count", "val": [ 36.0, 13.341664064126334 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "time_to_first_spike", "val": [ 13.125000000048459, 7.978878367291293 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "inv_first_ISI", "val": [ 44.469568411090556, 20.472955388202323 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "inv_second_ISI", "val": [ 42.13478466381379, 6.985920840490742 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "inv_last_ISI", "val": [ 20.328987102814864, 17.372494034764788 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "adaptation_index2", "val": [ 0.019002714935774098, 0.01526891209642951 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "clustering_index", "val": [ 0.6336300309597523, 0.09352316998769353 ], "n": 4.0, "weight": 1.0 }
+        ]
+    },
+    "Step220_2000ms": {
+        "soma.v": [
+            { "feature": "AP_amplitude", "val": [ 68.12622070093278, 10.62478587695223 ], "n": 4.0, "weight": 0.5 },
+            { "feature": "AHP_depth", "val": [ 10.09042194579451, 8.909893019262148 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "AP_width", "val": [ 0.6000000000001364, 0.4966554808584909 ], "n": 4.0, "weight": 0.1 },
+            { "feature": "AP_count", "val": [ 52.25, 14.522970311429637 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "time_to_first_spike", "val": [ 8.900000000047498, 5.930148958220414 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "inv_first_ISI", "val": [ 66.51077043955152, 25.937823464057587 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "inv_second_ISI", "val": [ 60.358412738450255, 14.17178132362198 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "inv_last_ISI", "val": [ 27.990742787552485, 12.344617113653868 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "adaptation_index2", "val": [ 0.010500805907498726, 0.006001068767605502 ], "n": 4.0, "weight": 1.0 },
+            { "feature": "clustering_index", "val": [ 0.6630997474747475, 0.10424677437016955 ], "n": 4.0, "weight": 1.0 }
+        ]
+    },
+    "ReboundStep-300_2000ms": {
+        "soma.v": [
+            { "feature": "voltage_base", "val": [ -67.48582445780448, 3.0384715195383256 ], "n": 6.0, "weight": 1.0 },
+            { "feature": "AP1_amp_after_stim", "val": [ 93.33119710150196, 35.27297857410855 ], "n": 6.0, "weight": 0.5 },
+            { "feature": "AP2_amp_after_stim", "val": [ 38.82171631616616, 7.509127976057848 ], "n": 4.0, "weight": 0.5 },
+            { "feature": "time_to_first_spike_after_stim", "val": [ 1020.0333333322237, 9.748572545070072 ], "n": 6.0, "weight": 1.0 },
+            { "feature": "AP_count_after_stim", "val": [ 3.0, 2.0976176963403033 ], "n": 6.0, "weight": 1.0 },
+            { "feature": "inv_first_ISI_after_stim", "val": [ 164.97620435066253, 132.31979234045716 ], "n": 6.0, "weight": 1.0 },
+            { "feature": "inv_second_ISI_after_stim", "val": [ 101.47406480331854, 111.29617148110086 ], "n": 6.0, "weight": 1.0 },
+            { "feature": "inv_last_ISI_after_stim", "val": [ 102.03428646834152, 87.31889062772998 ], "n": 6.0, "weight": 1.0 },
+            { "feature": "voltage_after_stim", "val": [ -65.24715345960003, 2.971313667744795 ], "n": 6.0, "weight": 1.0 },
+            { "feature": "AP_count_before_stim", "val": [ 0, 0.001 ], "weight": 1.0, "n": 0 }
+        ]
+    },
+    "SagStep-200_2000ms": {
+        "soma.v": [
+            { "feature": "voltage_base", "val": [ -75.75083126491955, 1.9428233001580688 ], "n": 9.0, "weight": 1.0 },
+            { "feature": "sag_ratio3", "val": [ 35.300609959462136, 14.106189388042788 ], "n": 9.0, "weight": 1.0 },
+            { "feature": "AP_count_before_stim", "val": [ 0, 0.001 ], "weight": 1.0, "n": 0 }
+        ]
+    },
+    "Step_2000ms": {
+        "soma.v": [
+            { "feature": "input_resistance", "val": [ 225.1523844401043, 89.00922958345166 ], "n": 9.0, "weight": 1.0 }
+        ]
+    },
+    "Pulse": {
+        "soma.v": [
+            { "feature": "decay_time_constant_after_stim2", "val": [ 20.69, 10.27 ], "weight": 1 }
+        ]
+    }
+}

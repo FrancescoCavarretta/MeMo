@@ -3,7 +3,7 @@
 from .model import Model
 
 class Link:
-    def __init__(self, input, output, function=None):
+    def __init__(self, input, output, distribution=None, **kwargs):
         
         """
         Connect two Models
@@ -22,11 +22,37 @@ class Link:
         # initialize the properties
         self.__input = None
         self.__output = None
-        self.__function = None
+        self.__distribution = distribution
+
+        if "target" in kwargs:
+            self.target_feature, self.section_type, self.min_value, self.max_value = kwargs["target"]
+            assert self.target_feature == "diam" or self.target_feature == "dist"
         
         # set the properties
-        self.input, self.output, self.function = \
-            input, output, function
+        self.input, self.output = \
+            input, output
+
+        
+    @property
+    def distribution(self): 
+        """
+        Returns
+        -------
+            input model of the link
+        """
+        return self.__distribution
+    
+    
+    @distribution.setter
+    def distribution(self, m):
+        """
+        Parameters
+        ----------
+        m : Model
+            Model of input
+        """
+        assert isinstance(m, Model)
+        self.__distribution =  m
         
         
     @property
@@ -71,46 +97,6 @@ class Link:
         """
         assert isinstance(m, Model)
         self.__output =  m
-        
-        
-    @property
-    def function(self):
-        """
-        Returns
-        -------
-           function elaborating connections
-        """
-        return self.__function
-    
-    
-    @function.setter
-    def function(self, func):
-        """
-        func : callable
-               Function connecting input and output model
-               It can be None or callable object
-        """
-        
-        # if function is None don't do anything
-        if func is None:
-            self.__function = func
-            return
-        
-        
-        # it is a function
-        assert (callable(func) and \
-                func.__code__.co_varnames == (
-                    "input", "output"
-                    ))
-            
-        self.__function = func
-        
-        # execute the function
-        self.__function(self.input, self.output)
-
-
-
-        
           
 
 if __name__ == "__main__":

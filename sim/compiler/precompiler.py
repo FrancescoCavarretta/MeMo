@@ -83,7 +83,6 @@ def _mk_simobject(x, seedgen, models, links):
     Pre-compiled model or link
     """
     # the model or link might have been packged already
-    
     if x in models:
         return models[x]
     elif x in links:
@@ -91,8 +90,13 @@ def _mk_simobject(x, seedgen, models, links):
     else:        
         ret = { 
             "object":x,
+            "submodels":{}
             }
         
+        # check whether it requires a seed assignment
+        if type(x) in _random_objects:
+            ret["seed"] = seedgen()
+            
         if isinstance(x, link.Link):
             # it is a link
             ret["is_link"] = True
@@ -103,28 +107,21 @@ def _mk_simobject(x, seedgen, models, links):
             ret["output"] = _mk_simobject(x.output, seedgen, models, links)
             ret["input_link"]  = ret
             ret["output_link"] = ret
-            
+
+            # if there is a distribution,
+            # add it as a submodel
+            if hasattr(ret["object"], "distribution") and ret["object"].distribution:
+                if isinstance(x.input, model.ModelPopulation):
+                    ret["submodels"]["distribution"] = [_mk_simobject(ret["object"].distribution(), seedgen, models, links) for i in range(len(x.input)) ]
+                else:
+                    ret["submodels"]["distribution"] = _mk_simobject(ret["object"].distribution, seedgen, models, links)
+                    
             # add the link
             links[x] = ret
         elif isinstance(x, model.Model):
             ret["is_link"] = False
             ret["is_population"] = isinstance(x, model.ModelPopulation)
-            
-            # add the model
-            models[x] = ret
-        else:
-            raise ValueError(f"It can convert only Model or Link objects: {x}")
-            
-            
-        # check whether it requires a seed assignment
-        if type(x) in _random_objects:
-            ret["seed"] = seedgen()
-            
-        # compile the submodels
-        ret["submodels"] = {}
-        
-        # be careful here, as ModelPopulation is a subclass of Model
-        if isinstance(x, model.Model):
+
             if isinstance(x, model.ModelPopulation):
                 # if it is a ModelPopulation there may be multiple instances of a given model
                 for mname in x.itersubmodels():
@@ -134,6 +131,13 @@ def _mk_simobject(x, seedgen, models, links):
                 # otherwise we assume there is a single instance for a model
                 for mname in x.itersubmodels():
                     ret["submodels"][mname] = _mk_simobject(getattr(x, mname), seedgen, models, links)
+                    
+            # add the model
+            models[x] = ret
+        else:
+            raise ValueError(f"It can convert only Model or Link objects: {x}")
+
+
             
         return ret
         
