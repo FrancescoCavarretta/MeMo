@@ -36,18 +36,19 @@ class Cell:
     return sorted(np.load(filename, allow_pickle=True).tolist().items())
 
 
-  def mk_cell_model(self, cellid, control=True):
+  def mk_cell_model(self, cellid, control=False):
     import mkcell
     import os
     
-    filename = "test_model_" + ("control" if control else "lesioned") + "_edyta_test.npy"
+    filename = "test_model_" + ("control" if control else "lesioned") + "_edyta_test_good.npy"
     param = self.load_params(os.path.join(os.path.dirname(__file__), 'mkcell', filename))[cellid][1][0]
     etype=("control" if control else "lesioned") + "_BK_short_AP"
+    print (param, etype, filename)
     return mkcell.mk_cell_model(param, etype=etype)
 
-  def __init__(self, name, cellid=0):
+  def __init__(self, name, cellid=0, control=True):
     self.name = name
-    self.bpo_cell = self.mk_cell_model(cellid)
+    self.bpo_cell = self.mk_cell_model(cellid, control=control)
     self.cell = self.bpo_cell.icell
     self.morph_table, self.section = Cell.bpo2memo_cell(self.bpo_cell)
     self.product = { "Cell":self.section, "MorphologyTable":self.morph_table }
@@ -230,11 +231,12 @@ compiler.compile(r, base)
 
 
 
-def run(tstop):
+def run(tstop, color="blue"):
   rr = rec.Recorder(r["models"][i2t.cell]["real_simobj"].section["somatic"][0](0.5))
   h.load_file("stdgui.hoc")
   h.tstop = tstop
   h.run(tstop)
   data = rr.get()
-  plt.plot(data[:,0], data[:,1])
+  plt.plot(data[:,0], data[:,1], color=color)
+  plt.ylim([-85,30])
   plt.show()
