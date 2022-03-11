@@ -13,9 +13,9 @@ import sim.memo.microcircuit as mc
 
 import sim.memo.neuron as nrn
 
-import mkcell
 
-import mkmodules
+
+from mkmodules import mk_mod_files
 
 from neuron import h
 
@@ -24,17 +24,30 @@ import pandas as pd
 
 import matplotlib.pyplot as plt
 
-mkmodules.mk_mod_files()
 
 
-
+mk_mod_files()
     
 
 
 class Cell:
-  def __init__(self, name):
+  def load_params(self, filename):
+    import numpy as np
+    return sorted(np.load(filename, allow_pickle=True).tolist().items())
+
+
+  def mk_cell_model(self, cellid, control=True):
+    import mkcell
+    import os
+    
+    filename = "test_model_" + ("control" if control else "lesioned") + "_edyta_test.npy"
+    param = self.load_params(os.path.join(os.path.dirname(__file__), 'mkcell', filename))[cellid][1][0]
+    etype=("control" if control else "lesioned") + "_BK_short_AP"
+    return mkcell.mk_cell_model(param, etype=etype)
+
+  def __init__(self, name, cellid=0):
     self.name = name
-    self.bpo_cell = mk_cell_model(0)
+    self.bpo_cell = self.mk_cell_model(cellid)
     self.cell = self.bpo_cell.icell
     self.morph_table, self.section = Cell.bpo2memo_cell(self.bpo_cell)
     self.product = { "Cell":self.section, "MorphologyTable":self.morph_table }
@@ -83,18 +96,10 @@ class Cell:
         f = f[f[target_feature] < max_value]
     f = f[[ 'type', 'number', 'segment' ]]
     return [self.section[x["type"]][x["number"]](x["segment"]) for k, x in f.iterrows()]
-      
 
-def load_params(filename):
-  import numpy as np
-  return sorted(np.load(filename, allow_pickle=True).tolist().items())
+base.Cell = Cell
 
 
-def mk_cell_model(cellid, control=True):
-  filename = "test_model_" + ("control" if control else "lesioned") + "_edyta_test.npy"
-  param = load_params(filename)[cellid][1][0]
-  etype=("control" if control else "lesioned") + "_BK_short_AP"
-  return mkcell.mk_cell_model(param, etype=etype)
 
 
 class SynapticInputs(nrn.Model):
@@ -124,8 +129,30 @@ class SynapticInputs(nrn.Model):
 
 
 class InputToThalamus(model.Model):
-  def __init__(self, name, drivers, modulators, inhibitors):
-    model.Model.__init__(self, name, drivers=drivers, modulators=modulators, inhibitors=inhibitors, n_total=3, p_drivers=0.5, p_modulators=0.5, p_inhibitors=1/3.0)
+  def __init__(self, name, cell, drivers, modulators, inhibitors):
+    model.Model.__init__(self,
+                         name,
+                         cell=cell,
+                         drivers=drivers,
+                         modulators=modulators,
+                         inhibitors=inhibitors,
+                         n_total=3,
+                         p_drivers=0.5,
+                         p_modulators=0.5,
+                         p_inhibitors=1/3.0)
+
+
+    self.drv_ln = link.Link(self.drivers.syn, self.cell,
+                        distribution=distr.Distribution("uniform"),
+                        target=("dist", "basal", 0, 150))
+
+    self.mod_ln = link.Link(self.modulators.syn, self.cell,
+                        distribution=distr.Distribution("uniform"),
+                        target=("dist", "basal", 150, None))
+
+    self.bg_ln = link.Link(self.inhibitors.syn, self.cell,
+                        distribution=distr.Distribution("uniform"),
+                        target=("dist", "basal", 50, 200))
     
     for inputname in ["drivers", "modulators", "inhibitors"]:
       self.__linkattr__("n_" + inputname, "n", submodel=getattr(self, inputname))
@@ -176,39 +203,20 @@ bgSyn = nrn.Synapse("ExpSyn", erev=-75.0, tau=6.0)
 drvSyn = nrn.Synapse("AmpaNmda", erev=0.0)
 modSyn = nrn.Synapse("AmpaNmda", erev=0.0)
 
-idrv = SynapticInputs("drivers", drvSyn, stn.SpikeTrain("poissonian", mean_rate=55.0, tstop=5000.0, refractory_period=5.0, time_unit="ms"))
-imod = SynapticInputs("modulators", modSyn, stn.SpikeTrain("poissonian", mean_rate=55.0, tstop=5000.0, refractory_period=5.0, time_unit="ms"))
-iinh = SynapticInputs("inhibitors", bgSyn, stn.SpikeTrain("poissonian", mean_rate=55.0, tstop=5000.0, refractory_period=5.0, time_unit="ms"))
+bgST = stn.SpikeTrain("poissonian", mean_rate=55.0, tstop=5000.0, refractory_period=5.0, time_unit="ms")
+drvST = stn.SpikeTrain("poissonian", mean_rate=55.0, tstop=5000.0, refractory_period=5.0, time_unit="ms")
+modST = stn.SpikeTrain("poissonian", mean_rate=55.0, tstop=5000.0, refractory_period=5.0, time_unit="ms")
+
+idrv = SynapticInputs("drivers", drvSyn, bgST)
+imod = SynapticInputs("modulators", modSyn, drvST)
+iinh = SynapticInputs("inhibitors", bgSyn, modST)
 
 
-i2t = InputToThalamus("test1", idrv, imod, iinh)
-
-
-base.Cell = Cell
-
-
-c = nrn.Cell("TC")
-
-
-drv_ln = link.Link(i2t.drivers.syn, c,
-                    distribution=distr.Distribution("uniform"),
-                    target=("dist", "basal", 0, 150))
-
-mod_ln = link.Link(i2t.modulators.syn, c,
-                    distribution=distr.Distribution("uniform"),
-                    target=("dist", "basal", 150, None))
-
-bg_ln = link.Link(i2t.inhibitors.syn, c,
-                    distribution=distr.Distribution("uniform"),
-                    target=("dist", "basal", 50, 200))
+i2t = InputToThalamus("test1", nrn.Cell("TC"), idrv, imod, iinh)
 
 
 mc1 = mc.MicroCircuit("Test")
 mc1.add(i2t)
-mc1.add(c)
-mc1.add(bg_ln)
-mc1.add(mod_ln)
-mc1.add(drv_ln)
 
 i2t.n_total=10
 i2t.gsyn_ampa_drivers = 0.01
@@ -219,11 +227,14 @@ i2t.gsyn_inhibitors = 0.01
 r = precompiler.precompile(mc1, (0, 5))
 compiler.compile(r, base)
 
-rr = rec.Recorder(r["models"][c]["real_simobj"].section["somatic"][0](0.5))
 
-h.load_file("stdgui.hoc")
-h.tstop = 5000.0
-h.run(5000.0)
-data = rr.get()
-plt.plot(data[:,0], data[:,1])
-plt.show()
+
+
+def run(tstop):
+  rr = rec.Recorder(r["models"][i2t.cell]["real_simobj"].section["somatic"][0](0.5))
+  h.load_file("stdgui.hoc")
+  h.tstop = tstop
+  h.run(tstop)
+  data = rr.get()
+  plt.plot(data[:,0], data[:,1])
+  plt.show()
