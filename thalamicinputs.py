@@ -13,7 +13,7 @@ import sim.memo.microcircuit as mc
 
 import sim.memo.neuron as nrn
 
-
+import sim.nwbio as nwbio
 
 from mkmodules import mk_mod_files
 
@@ -231,12 +231,20 @@ compiler.compile(r, base)
 
 
 
-def run(tstop, color="blue"):
+def run(tstop, filename, color="blue"):
   rr = rec.Recorder(r["models"][i2t.cell]["real_simobj"].section["somatic"][0](0.5))
   h.load_file("stdgui.hoc")
   h.tstop = tstop
   h.run(tstop)
   data = rr.get()
-  plt.plot(data[:,0], data[:,1], color=color)
+  
+  fw = nwbio.FileWriter(filename, "thalamic_test", "thalamic_test_id")
+  cw = fw.get_cell_writer("test_cell")
+  cw.add(data[:, 0], data[:, 1])
+  fw.close()
+
+  fr = nwbio.FileReader(filename)
+  xdata, ydata = fr.read("sim_ephys_data_0")
+  plt.plot(xdata, ydata, color=color)
   plt.ylim([-85,30])
   plt.show()
