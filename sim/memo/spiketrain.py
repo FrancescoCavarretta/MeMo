@@ -17,6 +17,7 @@ class SpikeTrain(Model):
         "m":60,
         "h":3600.0
         }
+
     
     def __init__(self, name, **kwargs):    
         """
@@ -31,8 +32,14 @@ class SpikeTrain(Model):
         if "time_unit" not in kwargs:
             kwargs["time_unit"] = "s"
             
-        if name == "abbasi" and "tstop" not in kwargs:
-            kwargs["tstop"] = kwargs["time"][-1]
+        if name == "abbasi":
+            if "time" not in kwargs and "rate" not in kwargs:
+                import numpy
+                kwargs["time"] = numpy.linspace(0.0, kwargs["tstop"], num=200)
+                kwargs["rate"] = numpy.full(kwargs["time"].shape[0], kwargs["mean_rate"], dtype=float)
+                
+            if "tstop" not in kwargs:
+                kwargs["tstop"] = kwargs["time"][-1]
         
         kwargs.move_to_end("time_unit")
         

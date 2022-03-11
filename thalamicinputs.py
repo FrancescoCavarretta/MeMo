@@ -145,15 +145,15 @@ class InputToThalamus(model.Model):
 
     self.drv_ln = link.Link(self.drivers.syn, self.cell,
                         distribution=distr.Distribution("uniform"),
-                        target=("dist", "basal", 0, 150))
+                        target=("dist", "basal", 0, 50))
 
     self.mod_ln = link.Link(self.modulators.syn, self.cell,
                         distribution=distr.Distribution("uniform"),
-                        target=("dist", "basal", 150, None))
+                        target=("dist", "basal", 50, None))
 
     self.bg_ln = link.Link(self.inhibitors.syn, self.cell,
                         distribution=distr.Distribution("uniform"),
-                        target=("dist", "basal", 50, 200))
+                        target=("dist", "basal", 25., 125.0))
     
     for inputname in ["drivers", "modulators", "inhibitors"]:
       self.__linkattr__("n_" + inputname, "n", submodel=getattr(self, inputname))
@@ -204,9 +204,9 @@ bgSyn = nrn.Synapse("ExpSyn", erev=-75.0, tau=6.0)
 drvSyn = nrn.Synapse("AmpaNmda", erev=0.0)
 modSyn = nrn.Synapse("AmpaNmda", erev=0.0)
 
-bgST = stn.SpikeTrain("poissonian", mean_rate=55.0, tstop=5000.0, refractory_period=5.0, time_unit="ms")
-drvST = stn.SpikeTrain("poissonian", mean_rate=55.0, tstop=5000.0, refractory_period=5.0, time_unit="ms")
-modST = stn.SpikeTrain("poissonian", mean_rate=55.0, tstop=5000.0, refractory_period=5.0, time_unit="ms")
+bgST = stn.SpikeTrain("abbasi", regularity=1.0, mean_rate=20.0, tstop=2000.0, refractory_period=5.0, time_unit="ms")
+drvST = stn.SpikeTrain("abbasi", regularity=1.0, mean_rate=20.0, tstop=2000.0, refractory_period=5.0, time_unit="ms")
+modST = stn.SpikeTrain("abbasi", regularity=1.0, mean_rate=20.0, tstop=2000.0, refractory_period=5.0, time_unit="ms")
 
 idrv = SynapticInputs("drivers", drvSyn, bgST)
 imod = SynapticInputs("modulators", modSyn, drvST)
@@ -219,10 +219,10 @@ i2t = InputToThalamus("test1", nrn.Cell("TC"), idrv, imod, iinh)
 mc1 = mc.MicroCircuit("Test")
 mc1.add(i2t)
 
-i2t.n_total=10
+
 i2t.gsyn_ampa_drivers = 0.01
-i2t.gsyn_ampa_modulators = 0.01
-i2t.gsyn_inhibitors = 0.01
+i2t.gsyn_ampa_modulators = 0.0
+i2t.gsyn_inhibitors = 0.0
 
 
 r = precompiler.precompile(mc1, (0, 5))
@@ -231,10 +231,11 @@ compiler.compile(r, base)
 
 
 
-def run(tstop, filename, color="blue"):
+def run(tstop=2000.0, filename="test.nwb", color="blue", v_init=-78.):
   rr = rec.Recorder(r["models"][i2t.cell]["real_simobj"].section["somatic"][0](0.5))
   h.load_file("stdgui.hoc")
   h.tstop = tstop
+  h.finitialize(v_init)
   h.run(tstop)
   data = rr.get()
   
@@ -246,5 +247,7 @@ def run(tstop, filename, color="blue"):
   fr = nwbio.FileReader(filename)
   xdata, ydata = fr.read("sim_ephys_data_0")
   plt.plot(xdata, ydata, color=color)
-  plt.ylim([-85,30])
+  #plt.ylim([-85,30])
   plt.show()
+
+run()
