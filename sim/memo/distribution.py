@@ -31,7 +31,10 @@ class Distribution(Model):
             ("mean", "var"):dict(),
             ("mean", "std"):("mean", "var"),
             None:dict(mean=0, std=1)
-        }
+        },
+        "empirical":{
+            ("x", "freq"):dict()
+            }
     }
     
     
@@ -86,13 +89,16 @@ class Distribution(Model):
             
     def __init__(self, name, **kwargs):
         """
-        Models of Probability Distributions
+        Models of Probability Distributions.
+        If distribution is empirical, the bins are assumed to be equally sized.
+        Empirical distributions are only discrete, at this time.
 
         Parameters
         ----------
         name : str
             probability distribution name
         **kwargs : parameters of the distribution
+        
         """
 
         # map the attributes
@@ -137,25 +143,62 @@ class Distribution(Model):
         # initialize
         Model.__init__(self, name, **kwargs)
         
+        if name == "empirical":
+            self.cdf, self.mean, self.var = self._empirical(self.x, self.freq)
+            self.a, self.b = self.x[0], self.x[-1]
+            
         # distribution links
         distrlinks = Distribution.get_param_links(self.name)
+            
         # if not a str or tuple, it is a key
         # we start by mapping the parameters passed as an argument
         try:        
             param_names = tuple(kwargs.keys())
             if len(kwargs) == 1:
                 param_names = param_names[0]
+                
             set_map_attrs(param_names, distrlinks)
+            
         except KeyError:
             raise ValueError(f"Combination of parameters not recognized for the distribution {self.name} not known: {kwargs.keys()} {distrlinks}")
-        
+            
         # map the other parameters
         for attrsrc in list(distrlinks.keys()):
-            set_map_attrs(attrsrc, distrlinks)           
- 
+            set_map_attrs(attrsrc, distrlinks)        
+            
+        # check std/var again
+        # link variance and standard deviation        
+        # variance and std. dev. should be always defined 
+        # if "std" was an argument, we need to map std->var first
+        if hasattr(self, "std"):   
+            self.__linkattr__("std", "var", function="var=std**2")   
+            self.__linkattr__("var", "std", function="import math\nstd=math.sqrt(var)") 
+        elif hasattr(self, "var"):
+            self.__linkattr__("var", "std", function="import math\nstd=math.sqrt(var)")
+            self.__linkattr__("std", "var", function="var=std**2")              
+            
 
+    def _empirical(self, x, y):
+        import numpy as np
+        
+        if not isinstance(x, np.ndarray):
+            x = np.array(x)
+            
+        if not isinstance(y, np.ndarray):
+            y = np.array(y)
+            
+            
+        pdf = y / np.sum(y)
+        cdf = np.cumsum(pdf)
+        
+        mean = np.sum(pdf * x)
+        var = np.sum(pdf * np.power(x - mean, 2))
+        
+        return cdf, mean, var
+        
 if __name__ == "__main__":
     d1 = Distribution("gamma", k=1, theta=2)
     d2 = Distribution("gamma", mean=1, var=2)
     d3 = Distribution("normal")
     d3 = Distribution("poisson")
+    d4 = Distribution("empirical", x=[0,1,2,3,4,5,6,7], y=[1,2,3,4,5,4,3,2,1])

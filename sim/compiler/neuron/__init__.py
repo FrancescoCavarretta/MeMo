@@ -27,10 +27,10 @@ class SpikeTrain:
         
         """ let's test the consistency of the configuration """
         #if max_frequency is None:
-        #    max_frequency = 1.0/refractory_period
+        max_frequency = 1.0/refractory_period
         
         #if min_frequency is None:
-        #    min_frequency = 1e-5
+        min_frequency = 1e-5
           
         #assert min_frequency < max_frequency
         #assert max_frequency <= 1.0/refractory_period
@@ -47,7 +47,7 @@ class SpikeTrain:
                 FRate = min_frequency
       
             try:
-                return 1.0/FRate 
+                return 1.0/FRate
             except:
                 return 1.0/max_frequency
     
@@ -56,7 +56,7 @@ class SpikeTrain:
         # Params for Gamma: rate from rate template (and k from Lv distribution = reg)
         ISIs = []
         I = 0
-        while I < len(frequency):
+        while I < len(time):
             # gamrnd = matlab fn for random arrays from gamma distribution. 
             # Given arguments get a mean firing rate of 1
             X = distribution() #np.random.gamma(Reg, scale=1.0/Reg)
@@ -64,9 +64,9 @@ class SpikeTrain:
             
             J = I
             for z in range(Precision):
-                MeanRate = np.mean(frequency[I:(J+1)]) # calculate mean rate over expected mean interval
+                MeanRate = np.mean(rate[I:(J+1)]) # calculate mean rate over expected mean interval
                 CurrentISI = X*RateToISI(MeanRate)  
-                J = min([ len(frequency)-1, I+int(round(CurrentISI/TimeBinSz)) ])  # calculate the interval boundary
+                J = min([ len(rate)-1, I+int(round(CurrentISI/TimeBinSz)) ])  # calculate the interval boundary
     
               
             
@@ -78,8 +78,8 @@ class SpikeTrain:
                 # maximal rate for the original interval is determined.  Then the
                 # original interval is shortened to the time where the rate exceeds
                 # ungam, and a 2nd interval for the new max rate is added.
-                MaxRate = np.max(frequency[I:(J+1)])
-                if MaxRate > UnGamma*frequency[I]:
+                MaxRate = np.max(rate[I:(J+1)])
+                if MaxRate > UnGamma*rate[I]:
                     CurrentISI = X*RateToISI(MaxRate)
             
             
@@ -148,15 +148,14 @@ class SpikeTrain:
         
         
 
-    
-
-class Distribution:
+class RNG:
     __distribution__ = {
-        "uniform":("neuron", "a", "b"),
-        "discunif":("neuron", "a", "b"),
-        "normal":("neuron", "mean", "var"),
-        "poisson":("neuron", "mean"),
-        "gamma":("numpy", "k", "theta")
+        "uniform":("neuron", "uniform","a", "b"),
+        "discunif":("neuron", "discunif","a", "b"),
+        "normal":("neuron", "normal","mean", "var"),
+        "poisson":("neuron", "poisson","mean"),
+        "gamma":("numpy", "gamma","k", "theta"),
+        "empirical":("neuron","uniform","a","b")
         }
     
     
@@ -171,25 +170,49 @@ class Distribution:
         return np.random.Generator(np.random.Philox(*self.seed))
         
     
+    def __init__(self, seed, name, **kwargs):
+        self.seed = seed
+        self.name = name
+        self.params = kwargs
+        self._params = Distribution.__distribution__[name]
+        self._rng = getattr(self, self._params[0])()
+        
+    
+    def __call__(self):
+        if self.name == "empirical":
+            import numpy as np
+            return self.params["x"][np.where(self._rng.uniform(0, 1) <= self.params["cdf"])[0][0]]
+            
+        return getattr(self._rng, self._params[1])(*[self.params[pname] for pname in self._params[2:]])
+        
+
+class Distribution:
+    __distribution__ = {
+        "uniform":("neuron", "a", "b"),
+        "discunif":("neuron", "a", "b"),
+        "normal":("neuron", "mean", "var"),
+        "poisson":("neuron", "mean"),
+        "gamma":("numpy", "k", "theta"),
+        "empirical":("neuron", "x", "cdf")
+        }
+    
+           
+    
     def __init__(self, seed, name):
         self.name = name
         self.product = None
         self.seed = seed
-        params = Distribution.__distribution__[name]
-        self.params = params
-        for _param in self.params[1:]:
-            setattr(self, _param, None)
-        self.make()
+        self.params = Distribution.__distribution__[name]
         
         
     def make(self):
         if self.product is None:
-            self.product = getattr(self, self.params[0])()
+            self.product = RNG(self.seed, self.name, **{ pname:getattr(self, pname)  for pname in self.params[1:] }) 
         return self.product
         
     
     def __call__(self):
-        return getattr(self.product, self.name)(*[getattr(self, pname) for pname in self.params[1:]])
+        return self.product()
 
     
 class SimObject:
