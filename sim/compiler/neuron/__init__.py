@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+from . import modules
+
 
 class SpikeTrain:
     time_conversion = {
@@ -142,6 +144,7 @@ class SpikeTrain:
             
     def make(self):
         if self.product is None:
+            self.distribution.make()
             self.product = self.generation_function(*[getattr(self, x) for x in self.generation_function.__code__.co_varnames[1:self.generation_function.__code__.co_argcount]])
         return self.product
         
@@ -154,7 +157,7 @@ class RNG:
         "discunif":("neuron", "discunif","a", "b"),
         "normal":("neuron", "normal","mean", "var"),
         "poisson":("neuron", "poisson","mean"),
-        "gamma":("numpy", "gamma","k", "theta"),
+        "gamma":("numpy", "gamma", "k", "theta"),
         "empirical":("neuron","uniform","a","b")
         }
     
@@ -174,26 +177,56 @@ class RNG:
         self.seed = seed
         self.name = name
         self.params = kwargs
-        self._params = Distribution.__distribution__[name]
-        self._rng = getattr(self, self._params[0])()
+        self._params = RNG.__distribution__[name]
+        self._rng = {
+            "numpy":getattr(self, "numpy")(),
+            "neuron":getattr(self, "neuron")()
+            }
         
     
-    def __call__(self):
-        if self.name == "empirical":
+    def __call__(self, interval=False, **kwargs):
+        
+        # if some parameter differs from the default, it is passed as an optional argument
+        param_src = self.params
+        param_src["name"] = self.name
+        param_src.update(kwargs)
+        #print (param_src)
+        
+        rng_name = RNG.__distribution__[param_src["name"]][0]
+        distr_name = RNG.__distribution__[param_src["name"]][1]
+        param_names = RNG.__distribution__[param_src["name"]][2:]
+        
+        _rng = self._rng[rng_name]
+        
+        if param_src["name"] == "empirical":
             import numpy as np
-            return self.params["x"][np.where(self._rng.uniform(0, 1) <= self.params["cdf"])[0][0]]
             
-        return getattr(self._rng, self._params[1])(*[self.params[pname] for pname in self._params[2:]])
+            i = np.where(_rng.uniform(0, 1) <= param_src["cdf"])[0][0] # bin index
+
+            if param_src["x"][i] == "somatic":
+                return param_src["x"][i]
+            else:
+                if interval:
+                    try:
+                        dx = (param_src["x"][i+1] - param_src["x"][i]) / 2
+                    except TypeError:
+                        dx = (param_src["x"][i] - param_src["x"][i-1]) / 2
+                    return param_src["x"][i] - dx, param_src["x"][i] + dx # return an interval corresponding to the bin
+                else:
+                    return param_src["x"][i] # single value
+        X = getattr(_rng, distr_name)(*[ param_src[pname] for pname in param_names ])
+        #print ("X:", X, distr_name, [ param_src[pname] for pname in param_names ])
+        return X
         
 
 class Distribution:
     __distribution__ = {
-        "uniform":("neuron", "a", "b"),
-        "discunif":("neuron", "a", "b"),
-        "normal":("neuron", "mean", "var"),
-        "poisson":("neuron", "mean"),
-        "gamma":("numpy", "k", "theta"),
-        "empirical":("neuron", "x", "cdf")
+        "uniform":("a", "b"),
+        "discunif":("a", "b"),
+        "normal":("mean", "var"),
+        "poisson":("mean"),
+        "gamma":("k", "theta"),
+        "empirical":("x", "cdf")
         }
     
            
@@ -207,12 +240,12 @@ class Distribution:
         
     def make(self):
         if self.product is None:
-            self.product = RNG(self.seed, self.name, **{ pname:getattr(self, pname)  for pname in self.params[1:] }) 
+            self.product = RNG(self.seed, self.name, **{ pname:getattr(self, pname)  for pname in self.params }) 
         return self.product
         
     
-    def __call__(self):
-        return self.product()
+    def __call__(self, interval=False, **kwargs):
+        return self.product(interval=interval, **kwargs)
 
     
 class SimObject:
@@ -326,7 +359,7 @@ class Synapse:
 
             getattr(self, self.name).loc(0.5, sec=self.Section)
 
-            self.product = getattr(self, self.name) #{ "ExpSyn":self.ExpSyn, "NetCon":self.NetCon }
+            self.product = getattr(self, self.name) 
         return self.product
                 
 
@@ -427,8 +460,26 @@ class SynapseToCell:
             self.input.make()
             self.output.make()
             
-            targets = self.output.get(target_feature=self.target_feature, min_value=self.min_value, max_value=self.max_value, section_type=self.section_type)
-            segment = targets[int(self.distribution() * len(targets))]
+            if self.distribution:
+                self.distribution.make()
+            
+            if self.distribution.name == "empirical":
+                while True:
+                    X = self.distribution(interval=True)
+                    if X == "somatic":
+                        targets = self.output.get(section_type="somatic", optional_X=self.distribution(name="uniform", a=0, b=1))
+                    else:
+                        targets = self.output.get(target_feature=self.target_feature, min_value=X[0], max_value=X[1], section_type=self.section_type, 
+                                                  optional_X=self.distribution(name="uniform", a=0, b=1))
+                    if targets:
+                        break
+                segment = targets[0]
+            else:
+                targets = self.output.get(target_feature=self.target_feature, min_value=self.min_value, max_value=self.max_value, section_type=self.section_type,
+                                          optional_X=self.distribution(name="uniform", a=0, b=1))
+                segment = targets[0]
+            
+            
             self.input.product.loc(segment.x, sec=segment.sec)
             self.product = { self.input.name:self.input.product,
                             "Segment":{"Arc":segment.x,
