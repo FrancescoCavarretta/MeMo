@@ -142,3 +142,9 @@ def compile(sim, base_mech=None):
     
     for simobj in sim["models"].values():
         simobj["real_simobj"].make()
+
+
+
+
+def register_object(base, obj):
+    setattr(base, obj.__class__.__name__, obj)
