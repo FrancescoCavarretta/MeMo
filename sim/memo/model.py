@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+
+
 class Model:
     class ParamIterator:
         def __init__(self, model, params, models_only=False, filter_out=["name"]):
@@ -82,8 +84,10 @@ class Model:
         Model name
         '''
         return self.name
+
+
             
-    def __setattr__(self, name, value, *args):
+    def __setattr__(self, name, value):
         """
         Change the value of an attribute.
         If it is linked to lower level models,
@@ -96,98 +100,146 @@ class Model:
         value : Str
             Value of the attribute
         """
-
-        pname = lambda x : self.name + "." + x if type(x) != tuple else x[0].name + "." + x[1]
+        # check whether the attribute is new
+        new_attribute_flag = not hasattr(self, name)
         
-        # if it is "__model_attrs__ or name, just set and return
+        # set the value
+        super().__setattr__(name, value) 
+        
         if name == "name" or name == "__model_attrs__":
-            super().__setattr__(name, value)
-            return
-
-        # check whether it is new
-        if not hasattr(self, name):
-            super().__setattr__(name, value)
+            # if it is "__model_attrs__ or name, just set and return
+            return 
+        
+        if new_attribute_flag and name not in self.__model_attrs__: 
+            # check whether is new
             self.__model_attrs__[name] = {}
             return
-                    
-            
+             
 
-        # base of the eventual recursion
-        # name is fixed at the initialization so it does not make problems
-        if len(args) > 0:
-            # check the recursion
-            if (self.name + "." + name) in args:
-                return
-        
-        # list of set attributes
-        args += ((self.name + "." + name), )
-                
-        
-        super().__setattr__(name, value)
-
-        # to avoid recursion, we store the name directly
-    
-
+        # check for linked attributes
         # if the attribute is an attribute of the model
-        for attrdest_ref, function in self.__model_attrs__[name].items():
-            
-            # define the outputmodel
+        for attrdest_ref, function in self.__model_attrs__[name].items(): 
             if type(attrdest_ref) == tuple:
                 # then it is an attribute of the submodel
-                output_model, attrdest = attrdest_ref
+                output_model, attrdest = attrdest_ref  
             else:
-                output_model = self
-                attrdest = attrdest_ref
+                output_model, attrdest = super(), attrdest_ref
                 
-            # if there is a map function
+               
+            # calculate the new value
             if function:
-                #try:
-                    if isinstance(function, str):
-                        # interpret the string, 
-                        # which is a chunk of python code
+                # if there is a map function
+                if isinstance(function, str):
+                    # interpret the string, 
+                    # which is a chunk of python code
+                    
+                    # run the code
+                    _locals = locals()
+                    
+                    # compy the local variable
+                    for varname in self.__model_attrs__:
+                        _locals[varname] = getattr(self, varname)
                         
-                        # run the code
-                        _locals = locals()
-                        
-                        # compy the local variable
-                        for varname in self.__model_attrs__:
-                            _locals[varname] = getattr(self, varname)
-                            
-                        # run python script
-                        exec(function, globals(), _locals)
-                        
-                        # read the value
-                        value = _locals[attrdest]
-                    elif callable(function):
-                        # it is a function
-                        # read the parameters of the function
-                        value = function(*([self]+[
-                            getattr(self, varname) for varname in function.__code__.co_varnames[1:function.__code__.co_argcount]
-                            ]))
-                        # nothing to change
-                        if value is None:
-                            return 
-                        
-                    else:
-                        raise ValueError(f"The link for variable {name} was not properly defined (2)")
-                #except:
-                #    raise Exception(f"The link for variable {name} was not properly defined: an error occurred while running its map function")
+                    # run python script
+                    exec(function, globals(), _locals)
+                    
+                    # read the value
+                    value = _locals[attrdest]
+                    
+                elif callable(function):
+                    # it is a function
+                    # read the parameters of the function
+                    value = function(*([self]+[
+                        getattr(self, varname) for varname in function.__code__.co_varnames[1:function.__code__.co_argcount]
+                        ]))
 
+                    # nothing to change
+                    if value is None:
+                        continue 
+                    
+                else:
+                    raise ValueError(f"The link for variable {name} was not properly defined (2)")
 
-            _pnames = set([pname(x) for x in self.__model_attrs__[name].keys()])
-            _pnames.remove(pname(attrdest_ref))
-            _pnames = _pnames.union(args)
-            _pnames = tuple(_pnames)
-            #print (_pnames, args)
+            # set the value
+            output_model.__setattr__(attrdest, value) 
             
-            # update the value
-            # there is a risk of recursion at this point
-            # rink of infinite recursion
-            # ---> setattr(output_model, attrdest, value) <---
-            output_model.__setattr__(attrdest, value, *_pnames) #args)
-                      
+            
+
+        update_function = {}
+
+
+        def add_attrs_to_update(update_function, model_attrs):      
+            to_scan = []
+            for attrdest, value in model_attrs.items():
+                if type(attrdest) == str and attrdest not in update_function and attrdest != name:
+                    update_function[attrdest] = value
+                    to_scan.append(attrdest)
+            return to_scan
+    
+    
+        to_scan = add_attrs_to_update(update_function, self.__model_attrs__[name])
+
+        while len(to_scan):
+            _to_scan = []
+            for _name in to_scan:
+                try:
+                    _to_scan += add_attrs_to_update(update_function, self.__model_attrs__[_name])
+                except KeyError:
+                    pass
+            to_scan = _to_scan
+#        
+
+        # check for linked attributes
+        # if the attribute is an attribute of the model
+        for attrdest, function in update_function.items(): 
+                
+               
+            # calculate the new value
+            if function:
+                # if there is a map function
+                if isinstance(function, str):
+                    # interpret the string, 
+                    # which is a chunk of python code
+                    
+                    # run the code
+                    _locals = locals()
+                    
+                    # compy the local variable
+                    for varname in self.__model_attrs__:
+                        _locals[varname] = getattr(self, varname)
+                        
+                    # run python script
+                    exec(function, globals(), _locals)
+                    
+                    # read the value
+                    value = _locals[attrdest]
+                    
+                elif callable(function):
+                    # it is a function
+                    # read the parameters of the function
+                    value = function(*([self]+[
+                        getattr(self, varname) for varname in function.__code__.co_varnames[1:function.__code__.co_argcount]
+                        ]))
+
+                    # nothing to change
+                    if value is None:
+                        continue 
+                    
+                else:
+                    raise ValueError(f"The link for variable {name} was not properly defined (2)")
+
+            # set the value
+            super().__setattr__(attrdest, value)             
+
+             
+            
+                             
+        
+
+            
                 
     def __linkattr__(self, attrsrc, attrdest, **kwargs):
+        
         """
             Link attributes between two models 
             from the parent model to the child model
@@ -238,18 +290,29 @@ class Model:
         if submodel:
             attrdest = (submodel, attrdest)
             
+            
         # create the link(s)
         for _attrsrc in attrsrc:
             # source attribute existing
             if _attrsrc not in self.__model_attrs__:
-                self.__setattr__(_attrsrc, getattr(attrdest[0], attrdest[1]) if type(attrdest) == tuple else getattr(self, attrdest))
+                # add the link
+                self.__model_attrs__[_attrsrc] = {}
                 
-            # add the link
-            self.__model_attrs__[_attrsrc][attrdest] = function            
+            # update/create entry                
+            self.__model_attrs__[_attrsrc][attrdest] = function        
             
-            # update the attribute in the model
-            self.__setattr__(_attrsrc, getattr(self, _attrsrc))
-        
+            if hasattr(self, _attrsrc):
+                # update the attribute in the model
+                self.__setattr__(_attrsrc, getattr(self, _attrsrc))
+            else:
+                if type(attrdest) == tuple:
+                    # update the attribute in the model
+                    self.__setattr__(_attrsrc, getattr(*attrdest))
+                else:
+                    # update the attribute in the model
+                    self.__setattr__(_attrsrc, getattr(self, attrdest))
+                
+                
 
     def copy(self, deep=True):
         """

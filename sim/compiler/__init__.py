@@ -147,4 +147,4 @@ def compile(sim, base_mech=None):
 
 
 def register_object(base, obj):
-    setattr(base, obj.__class__.__name__, obj)
+    setattr(base, obj.__name__, obj)

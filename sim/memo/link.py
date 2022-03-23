@@ -26,7 +26,7 @@ class Link:
 
         if "target" in kwargs:
             self.target_feature, self.section_type, self.min_value, self.max_value = kwargs["target"]
-            assert self.target_feature == "diam" or self.target_feature == "dist"
+            assert self.target_feature == "diam" or self.target_feature == "dist" or self.target_feature == "order"
         
         # set the properties
         self.input, self.output = \

@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 from . import modules
 
+import gc
+gc.disable()
 
 class SpikeTrain:
     time_conversion = {
@@ -15,12 +17,24 @@ class SpikeTrain:
     def abbasi(self, distribution, time, rate, refractory_period, tstop):
         
         conversion_factor = SpikeTrain.time_conversion[self.time_unit]
+        
+        #print (tstop, refractory_period, conversion_factor)
+        
         tstop *= conversion_factor
         refractory_period *= conversion_factor
         time *= conversion_factor
+
+        #print (tstop, refractory_period, conversion_factor)
         
         UnGamma   =self.UnGamma
         Precision =self.Precision
+        
+        distr_mean = distribution.k * distribution.theta
+        
+        #print (tstop, refractory_period, distr_mean, distribution.k, distribution.theta)
+        #import matplotlib.pyplot as plt
+        #plt.plot(time, rate)
+        #plt.show()        
         
         #max_frequency=None
         #min_frequency=None
@@ -29,10 +43,10 @@ class SpikeTrain:
         
         """ let's test the consistency of the configuration """
         #if max_frequency is None:
-        max_frequency = 1.0/refractory_period
+        max_frequency = 1.0 / refractory_period
         
         #if min_frequency is None:
-        min_frequency = 1e-5
+        min_frequency = 1.0
           
         #assert min_frequency < max_frequency
         #assert max_frequency <= 1.0/refractory_period
@@ -49,11 +63,10 @@ class SpikeTrain:
                 FRate = min_frequency
       
             try:
-                return 1.0/FRate
+                return 1.0 / FRate
             except:
-                return 1.0/max_frequency
+                return 1.0 / max_frequency
     
-        
         # Pull spike times from Gamma distribution to generate AST
         # Params for Gamma: rate from rate template (and k from Lv distribution = reg)
         ISIs = []
@@ -61,16 +74,14 @@ class SpikeTrain:
         while I < len(time):
             # gamrnd = matlab fn for random arrays from gamma distribution. 
             # Given arguments get a mean firing rate of 1
-            X = distribution() #np.random.gamma(Reg, scale=1.0/Reg)
-            
+            X = distribution() / distr_mean #np.random.gamma(Reg, scale=1.0/Reg)
             
             J = I
             for z in range(Precision):
                 MeanRate = np.mean(rate[I:(J+1)]) # calculate mean rate over expected mean interval
-                CurrentISI = X*RateToISI(MeanRate)  
+                CurrentISI = X * RateToISI(MeanRate)  
+                
                 J = min([ len(rate)-1, I+int(round(CurrentISI/TimeBinSz)) ])  # calculate the interval boundary
-    
-              
             
             if UnGamma:
                 # for cases where templates have sudden large
@@ -82,9 +93,11 @@ class SpikeTrain:
                 # ungam, and a 2nd interval for the new max rate is added.
                 MaxRate = np.max(rate[I:(J+1)])
                 if MaxRate > UnGamma*rate[I]:
-                    CurrentISI = X*RateToISI(MaxRate)
+                    CurrentISI = refractory_period + X * RateToISI(MaxRate) - refractory_period
             
-            
+            if CurrentISI < refractory_period:
+                CurrentISI = refractory_period
+                
             ISIs.append(CurrentISI)
             I += int(round(CurrentISI/TimeBinSz))
         
@@ -94,7 +107,7 @@ class SpikeTrain:
         SpikeTimes = SpikeTimes[SpikeTimes <= tstop]
         
         SpikeTimes /= conversion_factor
-        
+        time /= conversion_factor
         return SpikeTimes
 
     
@@ -124,6 +137,39 @@ class SpikeTrain:
         return SpikeTimes
     
     
+    def regular(self, mean_rate, tstart, number):
+        
+        conversion_factor = SpikeTrain.time_conversion[self.time_unit]
+        tstart *= conversion_factor
+        isi = 1.0 / mean_rate * conversion_factor
+        
+        import numpy as np
+
+        SpikeTimes = tstart + np.cumsum([isi] * number)
+        
+        SpikeTimes /= conversion_factor
+        
+        return SpikeTimes   
+    
+    def burst(self, inter_distribution, intra_distribution, \
+              time, rate, \
+              inter_time, inter_rate, min_inter_period, \
+              refractory_period, tstop): #, tweak=True):
+        
+        import numpy as np
+        
+       # t_burst = self.abbasi(inter_distribution, inter_time, inter_rate, min_inter_period, tstop)
+        
+        bursts = []
+        
+        #tspk = np.array([])
+        for t_burst_init in self.abbasi(inter_distribution, inter_time, inter_rate, min_inter_period, tstop):
+            _tspk = self.abbasi(intra_distribution, time, rate, refractory_period, time[-1])
+            _tspk = _tspk - _tspk[0] + t_burst_init
+            bursts.append(_tspk)
+            #tspk = np.concatenate((tspk, _tspk))
+        return bursts #if tweak else tspk
+            
     
     def __init__(self, name):
         self.name = name
@@ -131,24 +177,62 @@ class SpikeTrain:
         
         self.time_unit = "s"
         
-        if self.name == "abbasi":
+        if self.name == "abbasi" or self.name == "burst":
             self.UnGamma = None
-            self.Precision = 10
+            self.Precision = 100
             
         self.generation_function = getattr(self, name)
         for x in self.generation_function.__code__.co_varnames[1:self.generation_function.__code__.co_argcount]:
             setattr(self, x, None)
 
         
+    def combine_with_bursts(self):
+        import numpy as np
+        for b in self.burst_model.product:
+            
+            i = np.argmin(np.abs(b[0] - self.product))
+            b = b + self.product[i] - b[0]
+            
+            if self.product[-1] > b[-1]:
+                j = np.where(self.product > b[-1])[0][0]
+                if self.product[j] - b[-1] < self.refractory_period:
+                    j += 1
+                self.product = np.concatenate((self.product[:i], b, self.product[j:]))
+            else:
+                self.product = np.concatenate((self.product[:i], b))
+        self.product = self.product[self.product < self.tstop]
+                
             
             
     def make(self):
         if self.product is None:
-            self.distribution.make()
+            if hasattr(self, "distribution") and self.distribution:
+                self.distribution.make()
+                
+            if hasattr(self, "intra_distribution") and self.intra_distribution:
+                self.intra_distribution.make()
+                
+            if hasattr(self, "inter_distribution") and self.inter_distribution:
+                self.inter_distribution.make()
+                
+            if hasattr(self, "burst_model") and self.burst_model:
+                self.burst_model.make()                
+                
             self.product = self.generation_function(*[getattr(self, x) for x in self.generation_function.__code__.co_varnames[1:self.generation_function.__code__.co_argcount]])
+            
+            if hasattr(self, "burst_model") and self.burst_model:
+                self.combine_with_bursts()
+        
         return self.product
         
+    
+    def __del__(self):
+        del self.product
+        self.product = None
         
+        if hasattr(self, "distribution") and self.distribution:
+            del self.distribution
+            self.distribution = None
         
 
 class RNG:
@@ -217,7 +301,12 @@ class RNG:
         X = getattr(_rng, distr_name)(*[ param_src[pname] for pname in param_names ])
         #print ("X:", X, distr_name, [ param_src[pname] for pname in param_names ])
         return X
-        
+    
+    
+    def __del__(self):
+        del self._rng
+        self._rng = None
+
 
 class Distribution:
     __distribution__ = {
@@ -246,6 +335,10 @@ class Distribution:
     
     def __call__(self, interval=False, **kwargs):
         return self.product(interval=interval, **kwargs)
+    
+    def __del__(self):
+        del self.product
+        self.product = None
 
     
 class SimObject:
@@ -281,6 +374,11 @@ class SimObject:
     
     def __call__(self):
         return getattr(self.product, self.name)(*[getattr(self, pname) for pname in self.params[1:]])
+    
+    
+    def __del__(self):
+        del self.product
+        self.product = None
     
     
 class Synapse:
@@ -360,7 +458,11 @@ class Synapse:
             getattr(self, self.name).loc(0.5, sec=self.Section)
 
             self.product = getattr(self, self.name) 
-        return self.product
+        return self.product    
+    
+    def __del__(self):
+        del self.product
+        self.product = None
                 
 
 
@@ -382,7 +484,15 @@ class Population:
                     for obj in x:
                         obj.make()
                         self.product.append(obj)
-        return self.product
+        return self.product    
+    
+    
+    def __del__(self):
+        for p in self.product:
+            del p
+            
+        del self.product
+        self.product = None
     
     
 
@@ -415,7 +525,15 @@ class SpikeTrainToSynapse:
             self.VecStim.play(self.Vector)
             self.NetCon = h.NetCon(self.VecStim, self.output.product)
             self.product = { "Vector":self.Vector, "VecStim":self.VecStim, "NetCon":self.NetCon }
-        return self.product     
+        return self.product       
+    
+    
+    def __del__(self):
+        del self.input
+        del self.output
+        del self.product
+        
+        self.input = self.output = self.product = None  
     
     
         
@@ -441,7 +559,19 @@ class SpikeTrainPopulationToSynapseGroup:
                 st2syn.make()
                 self.product.append(st2syn)
             
-        return self.product      
+        return self.product 
+    
+    def __del__(self):
+        
+        del self.input
+        del self.output
+        
+        for p in self.product:
+            del p
+            
+        del self.product
+        
+        self.input = self.output = self.product = None        
 
 
 class SynapseToCell:
@@ -484,7 +614,14 @@ class SynapseToCell:
             self.product = { self.input.name:self.input.product,
                             "Segment":{"Arc":segment.x,
                                        "Section":segment.sec}}
-        return self.product   
+        return self.product     
+    
+    def __del__(self):
+        del self.input
+        del self.output
+        del self.product
+        
+        self.input = self.output = self.product = None   
 
 
 class SynapseGroupToCell:
@@ -513,7 +650,18 @@ class SynapseGroupToCell:
                 syn2cell.make()
                 self.product.append(syn2cell)
             
-        return self.product              
+        return self.product     
+      
+    def __del__(self):
+        del self.input
+        del self.output
+        
+        for p in self.product:
+            del p
+            
+        del self.product
+        
+        self.input = self.output = self.product = None         
         
         
 
@@ -527,4 +675,33 @@ class Cell:
     def make(self):
         if self.product is None:
             raise Warning("Cell model not translated")
-        return self.product
+        return self.product    
+    
+    def __del__(self):
+        del self.input
+        del self.output
+        del self.product
+        
+        self.input = self.output = self.product = None  
+
+
+def set(**kwargs):
+    from neuron import h
+    for k, v in kwargs.items():
+        try:
+            setattr(h, k, v)
+        except:
+            for s in forall():
+                if hasattr(s, k):
+                    setattr(s, k, v)
+        
+        
+def forall():
+    from neuron import h
+    allsecs = h.SectionList()
+    roots = h.SectionList()
+    roots.allroots()
+    for s in roots:
+        allsecs.wholetree(sec=s)
+    return [s for s in allsecs]
+    

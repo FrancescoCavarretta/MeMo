@@ -152,15 +152,15 @@ class Distribution(Model):
             
         # if not a str or tuple, it is a key
         # we start by mapping the parameters passed as an argument
-        try:        
-            param_names = tuple(kwargs.keys())
-            if len(kwargs) == 1:
-                param_names = param_names[0]
-                
-            set_map_attrs(param_names, distrlinks)
+        #try:        
+        param_names = tuple(kwargs.keys())
+        if len(kwargs) == 1:
+            param_names = param_names[0]
             
-        except KeyError:
-            raise ValueError(f"Combination of parameters not recognized for the distribution {self.name} not known: {kwargs.keys()} {distrlinks}")
+        set_map_attrs(param_names, distrlinks)
+            
+        #except KeyError:
+        #    raise ValueError(f"Combination of parameters not recognized for the distribution {self.name} not known: {kwargs.keys()} {distrlinks}")
             
         # map the other parameters
         for attrsrc in list(distrlinks.keys()):
@@ -191,8 +191,12 @@ class Distribution(Model):
         pdf = y / np.sum(y)
         cdf = np.cumsum(pdf)
         
-        mean = np.sum(pdf * x)
-        var = np.sum(pdf * np.power(x - mean, 2))
+        if x[-1] == "somatic":
+            mean = np.sum(pdf[:-1] * x[:-1].astype(float))
+            var = np.sum(pdf[:-1] * np.power(x[:-1].astype(float) - mean, 2))
+        else:
+            mean = np.sum(pdf * x)
+            var = np.sum(pdf * np.power(x - mean, 2))
         
         return cdf, mean, var
         

@@ -1,13 +1,20 @@
 class Recorder:
-  def __init__(self, seg):
-    from neuron import h
+  def __init__(self, ref, seg=None):
+    from neuron import h, nrn
       
     self.y = h.Vector()
     self.t = h.Vector()
     
-    seg.sec.push()
-    exec("h.CVode().record(seg._ref_v, self.y, self.t)", globals(), locals()) 
-    h.pop_section()
+    is_seg = seg and isinstance(seg, nrn.Segment)
+    
+    if is_seg:
+        seg.sec.push()
+        
+    h.CVode().record(ref, self.y, self.t)
+    
+    if is_seg:
+        h.pop_section()
+        
     self.interp_flag = True
 
   def get(self, dt=0.1):

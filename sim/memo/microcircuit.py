@@ -9,6 +9,7 @@ class MicroCircuit:
         self.name = name
         self.models = set()
         self.links = set()
+        self.properties = dict()
         
     def add(self, x):
         if isinstance(x, Link):
@@ -20,4 +21,7 @@ class MicroCircuit:
             self.models.add(x)
         else:
             raise Exception(f"The object {x} cannot be part of the Model")
+            
+    def set(**kwargs):
+        self.properties.update(kwargs)
 

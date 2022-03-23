@@ -34,7 +34,7 @@ def register_modules(dirname):
       
   
 def neuron_modules(func):
-  def _func():
+  def _func(*args):
     """
     This decorator compile the mod files, execute the function, then remove the modfiles
     """
@@ -60,7 +60,7 @@ def neuron_modules(func):
       os.system(f"nrnivmodl {mod_dirname}")
       neuron.load_mechanisms(os.getcwd()) # load neuron mechanisms
       
-      func() # run
+      func(*args) # run
       
     except:
       pass

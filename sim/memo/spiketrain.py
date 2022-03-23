@@ -9,6 +9,8 @@ Created on Mon Mar  7 09:37:14 2022
 from .model import Model, ModelPopulation
 from .distribution import Distribution
 
+
+    
 class SpikeTrain(Model):
     time_conversion = {
         "tenth_ms":1e-4,
@@ -35,11 +37,41 @@ class SpikeTrain(Model):
         if name == "abbasi":
             if "time" not in kwargs and "rate" not in kwargs:
                 import numpy
-                kwargs["time"] = numpy.linspace(0.0, kwargs["tstop"], num=200)
+                
+                kwargs["time"] = numpy.linspace(0.0, kwargs["tstop"], num=int(round(kwargs["tstop"] / (kwargs["refractory_period"] * 0.5))) )
                 kwargs["rate"] = numpy.full(kwargs["time"].shape[0], kwargs["mean_rate"], dtype=float)
                 
             if "tstop" not in kwargs:
                 kwargs["tstop"] = kwargs["time"][-1]
+                
+        elif name == "burst":
+            if "time" not in kwargs and "rate" not in kwargs:
+                import numpy
+                from . import burst
+                
+                if 'min_rate' not in kwargs:
+                    kwargs['min_rate'] = 0.
+                    
+                if 'dt' not in kwargs:
+                    kwargs['dt'] = 0.01
+                #kwargs["time"] = numpy.linspace(0.0, kwargs["Tdur"], num=200)
+                #kwargs["rate"] = numpy.full(kwargs["time"].shape[0], kwargs["max_rate"], dtype=float)   
+                 
+                kwargs["time"], kwargs["rate"] = burst.mk_burst_template(kwargs["Tpeak"], 
+                                                         kwargs["Tdur"], 
+                                                         kwargs["max_rate"], 
+                                                         kwargs["fast_rise"], 
+                                                         kwargs["fast_decay"],
+                                                         min_rate=kwargs["min_rate"],
+                                                         dt=(kwargs['refractory_period'] / 2.0))
+                
+            if "inter_time" not in kwargs and "inter_rate" not in kwargs:
+                import numpy
+                
+                kwargs["inter_time"] = numpy.linspace(0.0, kwargs["tstop"], num=int(round(kwargs["tstop"] / (kwargs["refractory_period"] * 0.5))) )
+                kwargs["inter_rate"] = numpy.full(kwargs["inter_time"].shape[0], kwargs["burst_mean_rate"], dtype=float)
+            
+        
         
         kwargs.move_to_end("time_unit")
         
@@ -57,6 +89,21 @@ class SpikeTrain(Model):
             self.distribution = Distribution("poisson")
             
             self.__linkattr__("mean_rate", "mean", submodel="distribution")
+        elif self.name == "regular":
+            pass
+        elif self.name == "burst":
+            # if we generate a burst,
+            # one distribution models the first-spike time of each burst
+            # the second distribution the intra-burst isi
+            self.inter_distribution = Distribution("gamma")
+            
+            self.__linkattr__("regularity", "k", submodel="inter_distribution")
+            self.__linkattr__("regularity", "theta", submodel="inter_distribution", function="theta=1.0/regularity")
+            
+            self.intra_distribution = Distribution("gamma")
+            self.__linkattr__("intra_burst_k", "k", submodel="intra_distribution")
+            self.__linkattr__("intra_burst_theta", "theta", submodel="intra_distribution")
+            
         else:
             raise NameError(f"Unknown type of Spike Train {self.name}")        
         
