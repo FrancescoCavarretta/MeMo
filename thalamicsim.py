@@ -29,10 +29,11 @@ import matplotlib.pyplot as plt
 import sys
 
 lesioned_flag = '--6ohda' in sys.argv
-cellid = int(sys.argv[sys.argv.index('--cellid')+1])
-filename = sys.argv[sys.argv.index('--filename')+1]
-tstop = float(sys.argv[sys.argv.index('--tstop')+1])
-    
+try:
+  cellid = int(sys.argv[sys.argv.index('--cellid')+1])
+except:
+  cellid = 0
+
 bodor_et_al2008 = {
     "xlabels":[0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 'somatic'],
     "weights":np.array([5.33673534681342, 10.590606603532123, 24.91409649347326, 8.85334015868954, 16.012285641156904, 5.302981827489134, 5.387125671871004, 3.6572178141796883, 8.91140900947019, 1.739665984131058, 1.733267212695175, 6.980899667263891])
@@ -249,10 +250,10 @@ class InputToThalamus(model.Model):
 
 
 def mk_vm_microcircuit(cellid,
-                       bg_param ={"Regularity":1.0, "MeanRate":20.0, "n":17,  "g":0.0022},
-                       rtn_param={"Regularity":1.0, "MeanRate":20.0, "n":7,   "g":0.0011},
-                       drv_param={"Regularity":1.0, "MeanRate":20.0, "n":41,  "g":0.0022, 'AmpaNmdaRatio':0.6 },
-                       mod_param={"Regularity":1.0, "MeanRate":20.0, "n":346, "g":0.0018, 'AmpaNmdaRatio':1.91},
+                       bg_param ={"Regularity":1.0, "MeanRate":60.0, "n":17,  "g":0.00082},
+                       rtn_param={"Regularity":1.0, "MeanRate":20.0, "n":7,   "g":0.00096},
+                       drv_param={"Regularity":1.0, "MeanRate":30.0, "n":41,  "g":0.00223, 'AmpaNmdaRatio':0.6 },
+                       mod_param={"Regularity":1.0, "MeanRate":15.0, "n":346, "g":0.00182, 'AmpaNmdaRatio':1.91},
                        tstop=5000.0):
 
   
@@ -295,14 +296,47 @@ def mk_vm_microcircuit(cellid,
 
 
 
+
+def mk_vm_microcircuit_test(cellid, 
+                       tstop=5000.0):
+
+  
+  cell =  nrn.Cell("TC", cellid=cellid)    
+
+  InhSyn = nrn.Synapse("GABAA", erev=-75.0, tau=14.0)
+  bgSyn = InhSyn()
+  rtnSyn = InhSyn()
+  drvSyn = nrn.Synapse("AmpaNmda", erev=0.0, ratio=0.6)
+  modSyn = nrn.Synapse("AmpaNmda", erev=0.0, ratio=1.91)
+
+
+  bgST = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
+  rtnST = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
+  drvST = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
+  modST = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
+
+
+  si_drv = SynapticInputs("driver", drvSyn, drvST, cell)
+  si_mod = SynapticInputs("modulator", modSyn, modST, cell)
+  si_bg = SynapticInputs("nigral", bgSyn, bgST, cell)
+  si_rtn = SynapticInputs("reticular", rtnSyn, rtnST, cell)
+
+  i2t = InputToThalamus("InputToVMThalamus", cell, si_drv, si_mod, si_bg, si_rtn)
+
+  vmcircuit = mc.MicroCircuit("VMThalamus")
+  vmcircuit.add(i2t)
+  
+  return vmcircuit, i2t
+
+
 # 200 ms increase/decrease
 # F-I curve for variations and background
 #@neuron_modules
-def run(cellid, filename, tstop, v_init=-78.):
+def run(vmcircuit, i2t, filename, tstop, seed, v_init=-78.):
   
-  vmcircuit, i2t = mk_vm_microcircuit(cellid, tstop=tstop)
   
-  r = precompiler.precompile(vmcircuit, (0, 5))
+  
+  r = precompiler.precompile(vmcircuit, seed)
   compiler.compile(r, base)
   
   soma = r["models"][i2t.cell]["real_simobj"].section["somatic"][0]
@@ -316,16 +350,44 @@ def run(cellid, filename, tstop, v_init=-78.):
   
   data = rr.get()
   
-  fw = nwbio.FileWriter(filename, "thalamic_test", "thalamic_test_id")
-  cw = fw.get_cell_writer("test_cell")
-  cw.add(data[:, 0], data[:, 1])
-  fw.close()
+  #fw = nwbio.FileWriter(filename, "thalamic_test", "thalamic_test_id")
+  #cw = fw.get_cell_writer("test_cell")
+  #cw.add(data[:, 0], data[:, 1])
+  #fw.close()
 
-  fr = nwbio.FileReader(filename)
-  xdata, ydata = fr.read("sim_ephys_data_0")
+  np.save(filename, data, allow_pickle=True)
+  
 
 
 
 if __name__ == '__main__':
-  run(cellid, filename, tstop)
+  cellid = int(sys.argv[sys.argv.index('--cellid')+1])
+  filename = sys.argv[sys.argv.index('--filename')+1]
+  tstop = float(sys.argv[sys.argv.index('--tstop')+1])
+  seed = int(sys.argv[sys.argv.index('--seed')+1])
+  
+  params = {
+          'bg':{"Regularity":1.0, "MeanRate":60.0, "n":17,  "g":0.0015},
+          'rtn':{"Regularity":1.0, "MeanRate":20.0, "n":7,   "g":0.0008},
+          'drv':{"Regularity":1.0, "MeanRate":30.0, "n":41,  "g":0.0033, 'AmpaNmdaRatio':0.6 },
+          'mod':{"Regularity":1.0, "MeanRate":15.0, "n":346, "g":0.0018, 'AmpaNmdaRatio':1.91}
+          }
+
+
+  for i, k in enumerate(sys.argv):
+          tokens = k[2:].split('=')
+          if len(tokens) == 2:
+            params_tokens = tokens[0].split('_')
+            if len(params_tokens) == 2:
+              _param_key, _param_name = params_tokens
+              if _param_key in params and _param_name in params[_param_key]:
+                value =  (int if _param_name == 'n' else float)(tokens[1])
+                params[_param_key][_param_name] = value
+              else:
+                print ('Warning {_param_key}{_param_name}{tokens[1]} not found')
+
+  print (params)
+
+  vmcircuit, i2t = mk_vm_microcircuit(cellid, tstop=tstop, bg_param=params['bg'], rtn_param=params['rtn'], drv_param=params['drv'], mod_param=params['mod'])
+  run(vmcircuit, i2t, filename, tstop, (seed, seed))
 
