@@ -24,15 +24,11 @@ import pandas as pd
 import numpy as np
 
 
-import matplotlib.pyplot as plt
 
 import sys
 
-lesioned_flag = '--6ohda' in sys.argv
-try:
-  cellid = int(sys.argv[sys.argv.index('--cellid')+1])
-except:
-  cellid = 0
+
+
 
 bodor_et_al2008 = {
     "xlabels":[0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 'somatic'],
@@ -52,13 +48,12 @@ class Cell:
       self.bpo_cell = self.cell = self.section = self.product = None
       
     
-  __control__ = not lesioned_flag
   def load_params(self, filename):
     import numpy as np
     return sorted(np.load(filename, allow_pickle=True).tolist().items())
 
 
-  def mk_cell_model(self, cellid, control=False):
+  def mk_cell_model(self, cellid, control):
     import mkcell
     import os
     
@@ -68,9 +63,10 @@ class Cell:
 
     return mkcell.mk_cell_model(param, etype=etype)
 
-  def __init__(self, name, cellid=cellid):
+  def __init__(self, name, cellid=0, lesioned_flag=False):
       self.name = name
       self.cellid = cellid
+      self.lesioned_flag = lesioned_flag
       self.product = None
       
 
@@ -79,7 +75,8 @@ class Cell:
     import pandas as pd
 
     if self.product is None:
-      self.bpo_cell = self.mk_cell_model(self.cellid, control=Cell.__control__)
+      self.bpo_cell = self.mk_cell_model(self.cellid, control=(not self.lesioned_flag))
+      #print ('cell', self.cellid, self.lesioned_flag)
       self.cell = self.bpo_cell.icell
       self.morph_table, self.section = Cell.bpo2memo_cell(self.bpo_cell)
       self.product = { "Cell":self.section, "MorphologyTable":self.morph_table }
@@ -250,6 +247,7 @@ class InputToThalamus(model.Model):
 
 
 def mk_vm_microcircuit(cellid,
+                       lesioned_flag,
                        bg_param ={"Regularity":1.0, "MeanRate":60.0, "n":17,  "g":0.00082},
                        rtn_param={"Regularity":1.0, "MeanRate":20.0, "n":7,   "g":0.00096},
                        drv_param={"Regularity":1.0, "MeanRate":30.0, "n":41,  "g":0.00223, 'AmpaNmdaRatio':0.6 },
@@ -257,7 +255,7 @@ def mk_vm_microcircuit(cellid,
                        tstop=5000.0):
 
   
-  cell =  nrn.Cell("TC", cellid=cellid)    
+  cell =  nrn.Cell("TC", cellid=cellid, lesioned_flag=lesioned_flag)    
 
   InhSyn = nrn.Synapse("GABAA", erev=-75.0, tau=14.0)
   bgSyn = InhSyn()
@@ -297,11 +295,12 @@ def mk_vm_microcircuit(cellid,
 
 
 
-def mk_vm_microcircuit_test(cellid, 
-                       tstop=5000.0):
+def mk_vm_microcircuit_test(cellid,
+                            lesioned_flag,
+                            tstop=5000.0):
 
   
-  cell =  nrn.Cell("TC", cellid=cellid)    
+  cell =  nrn.Cell("TC", cellid=cellid, lesioned_flag=lesioned_flag)    
 
   InhSyn = nrn.Synapse("GABAA", erev=-75.0, tau=14.0)
   bgSyn = InhSyn()
@@ -329,65 +328,127 @@ def mk_vm_microcircuit_test(cellid,
   return vmcircuit, i2t
 
 
-# 200 ms increase/decrease
-# F-I curve for variations and background
-#@neuron_modules
-def run(vmcircuit, i2t, filename, tstop, seed, v_init=-78.):
+
+def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=False,
+        all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"]):
   
+  import copy
   
-  
+  # precompile & compile the network representation
   r = precompiler.precompile(vmcircuit, seed)
   compiler.compile(r, base)
+
+  # instantiate the recorders
+  recordings = {}
   
-  soma = r["models"][i2t.cell]["real_simobj"].section["somatic"][0]
+  # instantiate recorders for sections
+  if all_section_recording:
+    section = r["models"][i2t.cell]["real_simobj"].section
+  else:
+    section = {"somatic":r["models"][i2t.cell]["real_simobj"].section["somatic"]}      
+
+  # nwb key id format
+  fmt = key + '.%s.%d(%f).%s'
   
-  rr = rec.Recorder(soma(0.5)._ref_v, seg=soma(0.5))
+  for sectype in section:
+    for i in section[sectype]:
+      s = section[sectype][i]
+
+      # segments
+      if s.L < rec_invl or sectype == "somatic":
+        arcs = np.array([0.5])
+      else:
+        arcs = np.arange(rec_invl, s.L, rec_invl) / s.L
+
+      # create recorders
+      for x in arcs:
+        # voltage membrane
+        for _varname in varname:
+          recordings[fmt % (sectype, i, x, _varname)] = rec.Recorder(getattr(s(x), _varname), seg=s(x))
+
+        # currents
+        for _curname in current_recording:
+          for _varname in [ "output", "i_output" ]:
+            _full_varname = _varname + "_" + _curname
+            recordings[fmt % (sectype, i, x, _full_varname)] = rec.Recorder(getattr(s(x), _full_varname), seg=s(x))
+
+  # print recording list
+  for k in recordings:
+    print ("\t", k)
+  print(len(recordings), "recorders")
   
+  # instantiate recorders for synapse
+  if all_synapse_recording:
+    fmt = key + '.syn.%s[%d].%s'
+    
+    for syngroup in [i2t.driver, i2t.modulator, i2t.reticular, i2t.nigral]:
+      for isyn, syn2cell in enumerate(r['models'][syngroup]['submodels']['syn2cell']['real_simobj'].product):
+        
+        syn2cell_product = copy.copy(syn2cell.product)
+
+        s, x = syn2cell_product['Segment']['Section'], syn2cell_product['Segment']['Arc']
+        
+        del syn2cell_product['Segment']
+
+        syn = syn2cell_product[list(syn2cell_product.keys())[0]]
+
+        for _varname in ['_ref_g', '_ref_i']:
+          recordings[fmt % (r['models'][syngroup]['object'].name, isyn, _varname)] = rec.Recorder(getattr(syn, _varname), seg=s(x))
+        
+  # run the NEURON simulation  
   h.load_file("stdgui.hoc")
   h.tstop = tstop
   h.finitialize(v_init)
   h.run(tstop)
-  
-  data = rr.get()
-  
-  #fw = nwbio.FileWriter(filename, "thalamic_test", "thalamic_test_id")
-  #cw = fw.get_cell_writer("test_cell")
-  #cw.add(data[:, 0], data[:, 1])
-  #fw.close()
 
-  np.save(filename, data, allow_pickle=True)
-  
+  # return
+  return { k:r.get() for k, r in recordings.items() }
 
 
 
-if __name__ == '__main__':
-  cellid = int(sys.argv[sys.argv.index('--cellid')+1])
-  filename = sys.argv[sys.argv.index('--filename')+1]
-  tstop = float(sys.argv[sys.argv.index('--tstop')+1])
-  seed = int(sys.argv[sys.argv.index('--seed')+1])
-  
+def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recording=False, all_synapse_recording=False, current_recording=[], rec_invl=80.0, varname=["_ref_v"], **kwargs):
+
   params = {
           'bg':{"Regularity":1.0, "MeanRate":60.0, "n":17,  "g":0.0015},
           'rtn':{"Regularity":1.0, "MeanRate":20.0, "n":7,   "g":0.0008},
           'drv':{"Regularity":1.0, "MeanRate":30.0, "n":41,  "g":0.0033, 'AmpaNmdaRatio':0.6 },
           'mod':{"Regularity":1.0, "MeanRate":15.0, "n":346, "g":0.0018, 'AmpaNmdaRatio':1.91}
           }
+  
+  for k, v in kwargs.items():
+    params_tokens = k.split('_')
+    if len(params_tokens) == 2:
+      _param_name, _param_key = params_tokens
+      if _param_key in params and _param_name in params[_param_key]:
+        params[_param_key][_param_name] = v
+        
+  vmcircuit, i2t = mk_vm_microcircuit(cellid, lesioned_flag, tstop=tstop, bg_param=params['bg'], rtn_param=params['rtn'], drv_param=params['drv'], mod_param=params['mod'])
+  
+  return run(vmcircuit, i2t, tstop, (seed, seed), key,
+             all_section_recording=all_section_recording, all_synapse_recording=all_synapse_recording, current_recording=current_recording, 
+             rec_invl=rec_invl, varname=varname)
 
 
+  
+
+if __name__ == '__main__':    
+  cellid = int(sys.argv[sys.argv.index('--cellid')+1])
+  key = sys.argv[sys.argv.index('--key')+1]
+  tstop = float(sys.argv[sys.argv.index('--tstop')+1])
+  seed = int(sys.argv[sys.argv.index('--seed')+1])
+  lesioned_flag = '--6ohda' in sys.argv
+  
+  params = dict()
   for i, k in enumerate(sys.argv):
+      if '=' in k:
           tokens = k[2:].split('=')
-          if len(tokens) == 2:
-            params_tokens = tokens[0].split('_')
-            if len(params_tokens) == 2:
-              _param_key, _param_name = params_tokens
-              if _param_key in params and _param_name in params[_param_key]:
-                value =  (int if _param_name == 'n' else float)(tokens[1])
-                params[_param_key][_param_name] = value
-              else:
-                print ('Warning {_param_key}{_param_name}{tokens[1]} not found')
+          params[tokens[0]] = (int if tokens[0].startswith('n') else float)(tokens[1])
 
-  print (params)
-
-  vmcircuit, i2t = mk_vm_microcircuit(cellid, tstop=tstop, bg_param=params['bg'], rtn_param=params['rtn'], drv_param=params['drv'], mod_param=params['mod'])
-  run(vmcircuit, i2t, filename, tstop, (seed, seed))
-
+  if '--all_current_recording' in sys.argv:
+    current_recording = []
+  else:
+    current_recording = []
+  
+  #print (params)
+  key, t, v = run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recording=('--all_section_recording' in sys.argv), all_synapse_recording=('--all_synapse_recording' in sys.argv), current_recording=current_recording, **params)
+  sys.exit(0)

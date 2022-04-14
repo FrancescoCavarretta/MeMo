@@ -57,8 +57,8 @@ BREAKPOINT	{
 	SOLVE states METHOD cnexp
 
         
-        output     = m
-        i_output   = gh_max*output*(v-e_h)
+        output     = gh_max*m
+        i_output   = output*(v-e_h)
 
         
 	ih    = i_output
@@ -76,8 +76,8 @@ INITIAL{
 	m = mInf
 
         
-        output     = m
-        i_output   = gh_max*output*(v-e_h)
+        output     = gh_max*m
+        i_output   = output*(v-e_h)
 
         
 	ih    = i_output

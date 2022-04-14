@@ -116,7 +116,7 @@ g_mean_rtn =  search_gsyn("reticular",  24.43 / 1000.0,     -9.3,  gmax=0.0015, 
 g_mean_cx= search_gsyn("modulator",  28.4 / 1000.0,       -79.3, ena=145.2, ek=-209.5, celsius=24)
 
 g_mean_cn_vm = search_gsyn("driver",  165.0 / 1000.0,   -68.4, ena=64.8, n=4, ek=-107.1, celsius=34) 
-g_mean_cn_vl = search_gsyn("driver",  847.0 / 1000.0,   -68.4, na=64.8, n=4, ek=-107.1, celsius=34)
+g_mean_cn_vl = search_gsyn("driver",  847.0 / 1000.0,   -68.4, ena=64.8, n=4, ek=-107.1, celsius=34)
 
 g_min_cn_vm  = search_gsyn("driver", (165.0-139.2) / 1000.0, -68.4, n=2, ena=64.8, ek=-107.1, celsius=34)
 g_max_cn_vm  = search_gsyn("driver", (165.0+139.2) / 1000.0, -68.4, n=5, ena=64.8, ek=-107.1, celsius=34)

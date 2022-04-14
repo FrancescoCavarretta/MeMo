@@ -1,52 +1,141 @@
+class CustomClient:
+    def __init__(self):
+        import os
+        import ipyparallel as ipp
+        
+        # create client & views
+        self.dview = ipp.Client(profile=os.getenv('IPYTHON_PROFILE'))
+        self.rc = [None] * len(self.dview)
+        self._results = {}
+
+
+    def flush(self):
+        """
+        Check whether any job is over
+        """
+        for i in range(len(self.rc)):
+            if self.rc[i] and self.rc[i].ready():
+                # get simulated data
+                # makes available
+                self._results.update(self.rc[i].get())
+
+                # mark the client as available
+                self.rc[i] = None
+                
+                
+    def running(self):
+        """
+        Check whether any client is busy
+        """
+        self.flush()
+        
+        for _rc in self.rc:
+            if _rc is not None:
+                return True
+        return False
+
+
+    def any_available(self):
+        self.flush()
+        return None in self.rc
+
+
+    def apply(self, func, *args, **kwargs):
+        self.flush()
+        print (self.rc)
+        i = self.rc.index(None)
+        self.rc[i] = self.dview[i].apply_async(func, *args, **kwargs)
+    
+
+    def results(self):
+        self.flush()
+        res = list( self._results.items() )
+        self._results.clear()
+        return res
+
+
+
+        
+    
+        
 if __name__ == '__main__':
+
+    def save_results(cc, fw=None, numpy_flag=False, verbose=True):
+        import numpy as np
+        for key_res, data_res in cc.results():
+            if verbose:
+                print (key_res, 'done')
+            if not numpy_flag:
+                fw.add(key_res, data_res[:, 0], data_res[:, 1])
+            else:
+                np.save(fw + '.' + key_res, data_res, allow_pickle=True)
+
+        
     import os
     import ipyparallel as ipp
     import sys
+    
+    
+    import sim.nwbio as nwbio
+    import numpy as np
+    import thalamicsim as ts
 
-    g_drv = float(sys.argv[sys.argv.index('--g_drv')+1])
-    g_mod = float(sys.argv[sys.argv.index('--g_mod')+1])
+    import time
+
+    twait = 10.0 # seconds
     
-    n_mod_ctl = 346
+    filenamein = sys.argv[sys.argv.index('--filenamein')+1]
+    filenameout = sys.argv[sys.argv.index('--filenameout')+1]
+    numpy_output = '--numpyout' in sys.argv
     
+    try:
+        init_index = int(sys.argv[sys.argv.index('--init_index')+1])
+    except:
+        init_index = 0
+    
+    try:
+        end_index = int(sys.argv[sys.argv.index('--end_index')+1])
+    except:
+        end_index = -1
+        
     
     params = []
+    for c in np.load(filenamein, allow_pickle=True).tolist()[init_index:end_index]:
+        c_cpy = dict(c.copy())
+        del c_cpy['cellid'], c_cpy['lesioned_flag'], c_cpy['tstop'], c_cpy['seed'], c_cpy['key']
+        params.append({'args':(c['cellid'], c['lesioned_flag'], c['tstop'], c['seed'], c['key']),
+                       'kwargs':c_cpy})
+
+
+
+    # use nwb format
+    if not numpy_output:
+        fw = nwbio.FileWriter(filenameout, "thalamic_data", "thalamic_data_id", max_size=None)
+
+    # client
+    cc = CustomClient()
     
-    for pr in ["", "--6ohda"]:
+    while len(params) or cc.running():
+        #print (len(params), cc.running(), cc.any_available())
         
-        for p_var_mod in [ -0.2, -0.1, 0.0, 0.1, 0.2 ]:
-            n_mod = int(round((1+p_var_mod) * n_mod_ctl))
+        # enqueue if any available
+        while len(params) and cc.any_available():
+            _param = params.pop()
+            cc.apply(ts.run_simulation, *_param['args'], **_param['kwargs'])
 
-            for n_rtn_fiber_factor in [ 0, 1, 2, 3, 4 ]:
-                    n_rtn = int(round(n_rtn_fiber_factor * 8.5 / 17 * 7))
-                    
-                    for n_bg_fiber_factor in [ 0, 1, 2, 3, 4 ]:
-                        n_bg = int(round(n_bg_fiber_factor * 8.5))
-                        
-                        for p_driver in [ 0.0, 0.05, 0.1, 0.15, 0.2 ]:
-                            n_drv = int(round(p_driver * n_mod_ctl))
-                        
-                            for i in range(10):
-                                for j in range(10):
-                                    filename = 'output-cellid=%d-seed=%d-tstop=10s-n_drv=%d-n_mod=%d-n_bg=%d-n_rtn=%d-g_drv=%g-g_mod=%g' % (i, j, n_drv, n_mod, n_bg, n_rtn, g_drv, g_mod)
-                                    if len(pr):
-                                        filename += '-6ohda'
-                                    filename += '.npy'
-                                    
-                                    cmd = f'python3 thalamicsim.py {pr} --cellid {i} --seed {j} --tstop 10000 --filename {filename}'
-                                    cmd += f' --drv_n={n_drv} --mod_n={n_mod} --bg_n={n_bg} --rtn_n={n_rtn} --drv_g={g_drv} --mod_g={g_mod}'
+        # check for results and save
+        save_results(cc, numpy_flag=numpy_output, fw=(filenameout if numpy_output else fw))
 
-                                    print (cmd)
-                                    
-                                    params.append(cmd)
+        # sleep
+        time.sleep(twait)
 
-    
-    
-    # create client & views
-    rc = ipp.Client(profile=os.getenv('IPYTHON_PROFILE'))
-    dv = rc[:]
-    v = rc.load_balanced_view()
-    amr = v.map(os.system, params, ordered=False)
-    for i, r in enumerate(amr):
-      print("slept", i, r)
 
-    rc.wait()
+    # save results
+    save_results(cc, numpy_flag=numpy_output, fw=(filenameout if numpy_output else fw))
+
+
+    # close
+    if not numpy_output:
+        fw.close()
+
+    sys.exit(0)

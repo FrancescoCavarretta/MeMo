@@ -2,6 +2,8 @@ NEURON {
 	POINT_PROCESS MeMo_ExpSyn
 	RANGE tau, e, i, g_max
 	NONSPECIFIC_CURRENT i
+
+	RANGE g
 }
 
 UNITS {

@@ -63,6 +63,8 @@ NEURON {
 	RANGE Cdur, Alpha, Beta, Rinf, Rtau, ampatau
 
         RANGE q10_ampa, temp0_ampa, q10_nmda, temp0_nmda, tadj_ampa, tadj_nmda, ampatau_in
+        
+        RANGE gnmda, gampa, i, inmda, iampa, g
 }
 
 UNITS {
@@ -126,7 +128,8 @@ STATE {
        Roff
 
        gampa 		
-       gnmda 			
+       gnmda 	
+       g		
 }
 
 INITIAL {
@@ -136,6 +139,9 @@ INITIAL {
 	synon = 0
 	gampa = 0
         gnmda = 0
+        
+        g = 0
+        
         Rnmda = 0
         Rnmda_max = exp(-3*Cdur/Rtau) * Rinf
         tadj_ampa=q10_ampa^((celsius-temp0_ampa)/10)
@@ -151,6 +157,7 @@ BREAKPOINT {
         
 	inmda = gnmda * (v - e)
 	iampa = gampa * (v - e)
+	g = gnmda + gampa
 	i = iampa + inmda
 }
 

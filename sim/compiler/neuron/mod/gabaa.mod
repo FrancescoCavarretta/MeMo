@@ -3,6 +3,8 @@ NEURON {
 	RANGE tau, e, i, g_max
 	NONSPECIFIC_CURRENT i
         RANGE tadj, tau_in, q10, temp0
+
+	RANGE g
 }
 
 UNITS {

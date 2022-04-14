@@ -48,14 +48,14 @@ BREAKPOINT {
 
 
            
-        output   = z
-        i_output = gSK_E2bar*output*(v - ek)
+        output   = gSK_E2bar*z
+        i_output = output*(v - ek)
 
 
 
            
-           gSK_E2  = gSK_E2bar*output
-           ik   =  gSK_E2 * (v - ek)
+           gSK_E2  = output
+           ik   =  i_output
 }
 
 DERIVATIVE states {
@@ -76,12 +76,12 @@ INITIAL {
 
 
 
-        output   = z
-        i_output = gSK_E2bar*output*(v - ek)
+        output   = gSK_E2bar*z
+        i_output = output*(v - ek)
 
 
 
            
-           gSK_E2  = gSK_E2bar*output
-           ik   =  gSK_E2 * (v - ek)
+           gSK_E2  = output
+           ik   =  i_output
 }

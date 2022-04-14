@@ -57,8 +57,9 @@ BREAKPOINT {
 
 
     
-    output   = (0.6*h1*m1^4+0.4*h2*m2^4)
-    i_output = gk_max*output*(v-ek)
+    
+    output   = gk_max * (0.6*h1*m1^4+0.4*h2*m2^4)
+    i_output = output*(v-ek)
 
 
 
@@ -76,8 +77,8 @@ INITIAL {
 
 
     
-    output   = (0.6*h1*m1^4+0.4*h2*m2^4)
-    i_output = gk_max*output*(v-ek)
+    output   = gk_max * (0.6*h1*m1^4+0.4*h2*m2^4)
+    i_output = output*(v-ek)
 
 
 

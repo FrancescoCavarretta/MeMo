@@ -158,8 +158,8 @@ INITIAL {
 
 
 
-    output   = m_min+m_q 
-    i_output = gmax * output * (v - ek)
+    output   = gmax * (m_min+m_q)
+    i_output = output * (v - ek)
 
     ik = i_output
 
@@ -190,8 +190,8 @@ BREAKPOINT {
 
     
 
-    output   = m_min+m_q 
-    i_output = gmax * output * (v - ek)
+    output   = gmax * (m_min+m_q)
+    i_output = output * (v - ek)
 
     ik = i_output
 

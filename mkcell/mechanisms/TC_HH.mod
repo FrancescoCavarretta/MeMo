@@ -76,13 +76,13 @@ ASSIGNED {
 BREAKPOINT {
 	SOLVE states METHOD cnexp
 
-        output_nat = m*m*m*h
-        output_nap = mp*mp*mp*hp : mp*mp*mp*(0.04*hp+0.96*hsp)
-        output_k   = n*n*n*n 
-        i_output_nat  = gna_max*output_nat*(v - ena)
-        i_output_nap  = gnap_max*output_nap*(v - ena)
+        output_nat = gna_max  * m*m*m*h
+        output_nap = gnap_max * mp*mp*mp*hp : mp*mp*mp*(0.04*hp+0.96*hsp)
+        output_k   = gk_max   * n*n*n*n 
+        i_output_nat  = output_nat*(v - ena)
+        i_output_nap  = output_nap*(v - ena)
         i_output_na   = i_output_nat + i_output_nap
-        i_output_k    = gk_max  * output_k * (v - ek)
+        i_output_k    = output_k * (v - ek)
         
 	ina   =  i_output_na :gna_max * m*m*m*h * (v - ena) + gnap_max * (mp*mp*mp*(0.04*hp + 0.96*hsp)) * (v - ena)
 	ik    = i_output_k   :gk_max  * n*n*n*n * (v - ek)
@@ -112,16 +112,16 @@ INITIAL {
 	hsp = hsp_inf
 	n = n_inf
 
-        output_nat = m*m*m*h
-        output_nap = (mp*mp*mp*hp) : mp*mp*mp*(0.04*hp+0.96*hsp)
-        output_k   = n*n*n*n 
-        i_output_nat  = gna_max*output_nat*(v - ena)
-        i_output_nap  = gnap_max*output_nap*(v - ena)
+        output_nat = gna_max  * m*m*m*h
+        output_nap = gnap_max * mp*mp*mp*hp    : mp*mp*mp*(0.04*hp+0.96*hsp)
+        output_k   = gk_max   * n*n*n*n 
+        i_output_nat  = output_nat *(v - ena)
+        i_output_nap  = output_nap *(v - ena)
         i_output_na   = i_output_nat + i_output_nap
-        i_output_k    = gk_max  * output_k * (v - ek)
+        i_output_k    = output_k * (v - ek)
         
-	ina   =  i_output_na :gna_max * m*m*m*h * (v - ena) + gnap_max * (mp*mp*mp*hp) * (v - ena) : * (mp*mp*mp*(0.04*hp + 0.96*hsp)) * (v - ena)
-	ik    = i_output_k   :gk_max  * n*n*n*n * (v - ek)
+	ina   =  i_output_na  :gna_max * m*m*m*h * (v - ena) + gnap_max * (mp*mp*mp*hp) * (v - ena) : * (mp*mp*mp*(0.04*hp + 0.96*hsp)) * (v - ena)
+	ik    =  i_output_k   :gk_max  * n*n*n*n * (v - ek)
 }
 
 PROCEDURE evaluate_fct(v(mV)) { LOCAL a,b,v2, v3, v4

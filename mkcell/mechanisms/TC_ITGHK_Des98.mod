@@ -90,8 +90,8 @@ BREAKPOINT {
 	SOLVE castate METHOD cnexp
 
         
-        output   = m*m*h
-        i_output = pcabar*output*ghk(v, cati, cato)
+        output   = pcabar*m*m*h
+        i_output = output*ghk(v, cati, cato)
 
         
 	icat     = i_output
@@ -117,8 +117,8 @@ INITIAL {
 	h = h_inf
 
 
-        output   = m*m*h
-        i_output = pcabar*output*ghk(v, cati, cato)
+        output   = pcabar*m*m*h
+        i_output = output*ghk(v, cati, cato)
 
 
         icat     = i_output
