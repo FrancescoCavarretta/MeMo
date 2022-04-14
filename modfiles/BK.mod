@@ -6,6 +6,8 @@ NEURON {
         RANGE vhalf
         GLOBAL shift
         GLOBAL tau_factor
+
+        RANGE i_output, output
 }
 
 UNITS {

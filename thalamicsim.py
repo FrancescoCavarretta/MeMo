@@ -450,5 +450,5 @@ if __name__ == '__main__':
     current_recording = []
   
   #print (params)
-  key, t, v = run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recording=('--all_section_recording' in sys.argv), all_synapse_recording=('--all_synapse_recording' in sys.argv), current_recording=current_recording, **params)
+  print ( run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recording=('--all_section_recording' in sys.argv), all_synapse_recording=('--all_synapse_recording' in sys.argv), current_recording=current_recording, **params) )
   sys.exit(0)

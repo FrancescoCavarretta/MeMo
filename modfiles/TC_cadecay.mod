@@ -11,6 +11,8 @@ NEURON {
         
         :RANGE delta_L3, taur_L3, cal3_inf, delta_L1, taur_L1, cal1_inf,  delta_L2, taur_L2, cal2_inf,  delta_T, taur_T, cat_inf
         RANGE delta_L1, taur_L1, cal1_inf,  delta_L2, taur_L2, cal2_inf,  delta_T, taur_T, cat_inf
+
+
 }
 
 UNITS {
