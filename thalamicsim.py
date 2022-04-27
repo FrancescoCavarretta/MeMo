@@ -330,7 +330,7 @@ def mk_vm_microcircuit_test(cellid,
 
 
 def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=False,
-        all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"]):
+        all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, t_checkpoint=200.0):
   
   import copy
   
@@ -362,20 +362,12 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
 
       # create recorders
       for x in arcs:
-        # voltage membrane
-        for _varname in varname:
-          recordings[fmt % (sectype, i, x, _varname)] = rec.Recorder(getattr(s(x), _varname), seg=s(x))
+        # voltage membrane, currents
+        for _varname in ( varname + current_recording ):
+          recordings[fmt % (sectype, i, x, _varname)] = rec.Recorder(getattr(s(x), _varname), seg=s(x), dt=dt)
 
-        # currents
-        for _curname in current_recording:
-          for _varname in [ "output", "i_output" ]:
-            _full_varname = _varname + "_" + _curname
-            recordings[fmt % (sectype, i, x, _full_varname)] = rec.Recorder(getattr(s(x), _full_varname), seg=s(x))
 
-  # print recording list
-  for k in recordings:
-    print ("\t", k)
-  print(len(recordings), "recorders")
+
   
   # instantiate recorders for synapse
   if all_synapse_recording:
@@ -392,21 +384,59 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
 
         syn = syn2cell_product[list(syn2cell_product.keys())[0]]
 
-        for _varname in ['_ref_g', '_ref_i']:
-          recordings[fmt % (r['models'][syngroup]['object'].name, isyn, _varname)] = rec.Recorder(getattr(syn, _varname), seg=s(x))
-        
+        for _varname in ['_ref_i']: #, '_ref_g']:
+          recordings[fmt % (r['models'][syngroup]['object'].name, isyn, _varname)] = rec.Recorder(getattr(syn, _varname), seg=s(x), dt=dt)
+
+  # print recording list
+  for k in recordings:
+    print ("\t", k)
+  print(len(recordings), "recorders")
+  
   # run the NEURON simulation  
   h.load_file("stdgui.hoc")
-  h.tstop = tstop
+
+  # check point
+  
   h.finitialize(v_init)
-  h.run(tstop)
+  h.stdinit()
+  h.cvode_active(1)
+  
+  first_run = True
+  
+  t = 0.
+  while t < tstop:  
+    if t_checkpoint and (t + t_checkpoint) < tstop:
+      tnext = t + t_checkpoint
+    else:
+      tnext = tstop
 
+    print (tnext, first_run, h.t, t, tstop, h.tstop)
+
+    
+    
+    if first_run:
+      h.tstop = tnext # update
+      h.run(tnext)
+    else:
+      h.continuerun(tnext)
+
+    # verbose
+    print ('checkpoint', h.t, tnext)
+    
+    # flush recordings
+    for r in recordings.values():
+      r._flush()
+
+    first_run = False
+    
+    t = tnext
+    
   # return
-  return { k:r.get() for k, r in recordings.items() }
+  return { k:r.get(dt=dt) for k, r in recordings.items() }
 
 
 
-def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recording=False, all_synapse_recording=False, current_recording=[], rec_invl=80.0, varname=["_ref_v"], **kwargs):
+def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recording=False, all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, **kwargs):
 
   params = {
           'bg':{"Regularity":1.0, "MeanRate":60.0, "n":17,  "g":0.0015},
@@ -421,34 +451,88 @@ def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recordin
       _param_name, _param_key = params_tokens
       if _param_key in params and _param_name in params[_param_key]:
         params[_param_key][_param_name] = v
-        
+
+  for k1 in params:
+    for k2 in params[k1]:
+      print(k1, k2, params[k1][k2])
+  
   vmcircuit, i2t = mk_vm_microcircuit(cellid, lesioned_flag, tstop=tstop, bg_param=params['bg'], rtn_param=params['rtn'], drv_param=params['drv'], mod_param=params['mod'])
   
   return run(vmcircuit, i2t, tstop, (seed, seed), key,
              all_section_recording=all_section_recording, all_synapse_recording=all_synapse_recording, current_recording=current_recording, 
-             rec_invl=rec_invl, varname=varname)
+             rec_invl=rec_invl, varname=varname, dt=dt)
 
+
+def save_results(cc, fw=None, numpy_flag=False, verbose=False):
+    import numpy as np
+    for key_res, data_res in cc.items():
+        if verbose:
+            print (key_res, 'done')
+        if not numpy_flag:
+            fw.add(key_res, data_res[:, 0], data_res[:, 1])
+        else:
+            np.save(fw + '.' + key_res, data_res, allow_pickle=True)
+
+                
+def run_simulation_output(cellid, lesioned_flag, tstop, seed, key, all_section_recording=False, all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, **kwargs):
+  output = run_simulation(cellid, lesioned_flag, tstop, seed, key,
+                          all_section_recording=all_section_recording, all_synapse_recording=all_synapse_recording, current_recording=current_recording,
+                          rec_invl=rec_invl, varname=varname, dt=dt, **kwargs)
+
+  fw = nwbio.FileWriter(key + ".nwb", "thalamic_data", "thalamic_data_id", max_size=None)
+  save_results(output, fw=fw)
+  fw.close()
 
   
+if __name__ == '__main__':
+  import numpy as np
 
-if __name__ == '__main__':    
-  cellid = int(sys.argv[sys.argv.index('--cellid')+1])
-  key = sys.argv[sys.argv.index('--key')+1]
-  tstop = float(sys.argv[sys.argv.index('--tstop')+1])
-  seed = int(sys.argv[sys.argv.index('--seed')+1])
-  lesioned_flag = '--6ohda' in sys.argv
-  
-  params = dict()
-  for i, k in enumerate(sys.argv):
-      if '=' in k:
-          tokens = k[2:].split('=')
-          params[tokens[0]] = (int if tokens[0].startswith('n') else float)(tokens[1])
+  if '--dt' in sys.argv:
+      dt = float(sys.argv[sys.argv.index('--dt')+1])
+  else:
+      dt = 0.1
 
+  if '--config_file' in sys.argv:
+    filenamein = sys.argv[sys.argv.index('--config_file')+1]
+    
+
+        
+    try:
+        index = int(sys.argv[sys.argv.index('--index')+1])
+    except:
+        index = 0
+                
+    cfg = dict(np.load(filenamein, allow_pickle=True).tolist()[index])
+    params = dict(cfg.copy())
+    del params['cellid'], params['lesioned_flag'], params['tstop'], params['seed'], params['key']
+    cellid, lesioned_flag, tstop, seed, key = cfg['cellid'], cfg['lesioned_flag'], cfg['tstop'], cfg['seed'], cfg['key']
+    
+  else:
+    cellid = int(sys.argv[sys.argv.index('--cellid')+1])
+    key = sys.argv[sys.argv.index('--key')+1]
+    tstop = float(sys.argv[sys.argv.index('--tstop')+1])
+    seed = int(sys.argv[sys.argv.index('--seed')+1])
+    lesioned_flag = '--6ohda' in sys.argv
+    
+    params = dict()
+    for i, k in enumerate(sys.argv):
+        if '=' in k:
+          try:
+            tokens = k[2:].split('=')
+            params[tokens[0]] = (int if tokens[0].startswith('n') else float)(tokens[1])
+          except:
+            pass
+
+  # recording ion channel states
   if '--all_current_recording' in sys.argv:
     current_recording = []
+    for suffix in ["BK", "iM", "TC_iT_Des98", "TC_iL", "TC_ih_Bud97", "TC_iD", "TC_iA", "SK_E2", "nat_TC_HH", "nap_TC_HH", "k_TC_HH" ]:
+      for prefix in ["_ref_i_output"]:
+        current_recording.append(prefix + "_" + suffix)
+    print (current_recording)
   else:
     current_recording = []
-  
-  #print (params)
-  print ( run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recording=('--all_section_recording' in sys.argv), all_synapse_recording=('--all_synapse_recording' in sys.argv), current_recording=current_recording, **params) )
+
+  print (f"cellid={cellid}\nseed={seed}\n6ohda={'on' if lesioned_flag else 'off'}\ntstop={tstop}\nkey={key}\nother params{params}")
+  run_simulation_output(cellid, lesioned_flag, tstop, seed, key, all_section_recording=('--all_section_recording' in sys.argv), all_synapse_recording=('--all_synapse_recording' in sys.argv), current_recording=current_recording, **params) 
   sys.exit(0)

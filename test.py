@@ -19,10 +19,14 @@
 
 from sim.nwbio import FileReader
 
-fr = FileReader('../prova/all_traces_8_1.nwb')
+fr = FileReader('../Desktop/all_recordings_4.nwb')
 
-k = list(fr.nwbfile.acquisition.keys())[0]
+k = list(fr.nwbfile.acquisition.keys())
 
 import matplotlib.pyplot as plt
-plt.plot(*fr.read(k))
+
+for _k in k[:10]:
+    plt.plot(*fr.read(_k), label=_k)
+
+plt.legend()
 plt.show()

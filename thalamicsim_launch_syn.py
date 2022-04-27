@@ -1,5 +1,5 @@
 class CustomClient:
-    def __init__(self):
+    def __init__(self, fw):
         import os
         import ipyparallel as ipp
         
@@ -7,6 +7,7 @@ class CustomClient:
         self.dview = ipp.Client(profile=os.getenv('IPYTHON_PROFILE'))
         self.rc = [None] * len(self.dview)
         self._results = {}
+        self.fw = fw
 
 
     def flush(self):
@@ -17,7 +18,15 @@ class CustomClient:
             if self.rc[i] and self.rc[i].ready():
                 # get simulated data
                 # makes available
-                self._results.update(self.rc[i].get())
+                out = self.rc[i].get()
+                
+                if out:
+                    # if the file was defined store data
+                    if self.fw:
+                        for key_res, data_res in out.items():
+                            fw.add(key_res, data_res[:, 0], data_res[:, 1])
+                    else:
+                        self._results.update(out)
 
                 # mark the client as available
                 self.rc[i] = None
@@ -42,7 +51,7 @@ class CustomClient:
 
     def apply(self, func, *args, **kwargs):
         self.flush()
-        print (self.rc)
+        #print (self.rc)
         i = self.rc.index(None)
         self.rc[i] = self.dview[i].apply_async(func, *args, **kwargs)
     
@@ -60,15 +69,12 @@ class CustomClient:
         
 if __name__ == '__main__':
 
-    def save_results(cc, fw=None, numpy_flag=False, verbose=True):
+    def save_results(cc, fw, verbose=True):
         import numpy as np
         for key_res, data_res in cc.results():
             if verbose:
                 print (key_res, 'done')
-            if not numpy_flag:
-                fw.add(key_res, data_res[:, 0], data_res[:, 1])
-            else:
-                np.save(fw + '.' + key_res, data_res, allow_pickle=True)
+            np.save(fw + '.' + key_res, data_res, allow_pickle=True)
 
         
     import os
@@ -82,11 +88,20 @@ if __name__ == '__main__':
 
     import time
 
-    twait = 10.0 # seconds
+    twait = 1.0 # seconds
     
     filenamein = sys.argv[sys.argv.index('--filenamein')+1]
     filenameout = sys.argv[sys.argv.index('--filenameout')+1]
     numpy_output = '--numpyout' in sys.argv
+    
+    all_section_recording = '--all_section_recording' in sys.argv
+    all_synapse_recording = '--all_synapse_recording' in sys.argv
+    all_current_recording = '--all_current_recording' in sys.argv
+
+    if '--dt' in sys.argv:
+        dt = float(sys.argv[sys.argv.index('--dt')+1])
+    else:
+        dt = 0.1
     
     try:
         init_index = int(sys.argv[sys.argv.index('--init_index')+1])
@@ -108,12 +123,16 @@ if __name__ == '__main__':
 
 
 
+    print ('n', len(params))
+
     # use nwb format
     if not numpy_output:
         fw = nwbio.FileWriter(filenameout, "thalamic_data", "thalamic_data_id", max_size=None)
+    else:
+        fw = None
 
     # client
-    cc = CustomClient()
+    cc = CustomClient(fw=fw)
     
     while len(params) or cc.running():
         #print (len(params), cc.running(), cc.any_available())
@@ -121,17 +140,54 @@ if __name__ == '__main__':
         # enqueue if any available
         while len(params) and cc.any_available():
             _param = params.pop()
-            cc.apply(ts.run_simulation, *_param['args'], **_param['kwargs'])
+            
+            if all_current_recording:
+##                current_recording = [
+##                    '_ref_i_output_BK', '_ref_output_BK',
+##                    '_ref_i_output_iM', '_ref_output_iM',
+##                    '_ref_i_output_TC_iT_Des98', '_ref_output_TC_iT_Des98',
+##                    '_ref_i_output_TC_iL', '_ref_output_TC_iL',
+##                    '_ref_i_output_TC_ih_Bud97', '_ref_output_TC_ih_Bud97',
+##                    '_ref_i_output_TC_iD', '_ref_output_TC_iD',
+##                    '_ref_i_output_TC_iA', '_ref_output_TC_iA',
+##                    '_ref_i_output_SK_E2', '_ref_output_SK_E2',
+##                    '_ref_i_output_nat_TC_HH', '_ref_output_nat_TC_HH',
+##                    '_ref_i_output_nap_TC_HH', '_ref_output_nap_TC_HH',
+##                    '_ref_i_output_k_TC_HH', '_ref_output_k_TC_HH'
+##                    ]
+                current_recording = [
+                    '_ref_i_output_BK', 
+                    '_ref_i_output_iM', 
+                    '_ref_i_output_TC_iT_Des98', 
+                    '_ref_i_output_TC_iL', 
+                    '_ref_i_output_TC_ih_Bud97', 
+                    '_ref_i_output_TC_iD', 
+                    '_ref_i_output_TC_iA', 
+                    '_ref_i_output_SK_E2', 
+                    '_ref_i_output_nat_TC_HH', 
+                    '_ref_i_output_nap_TC_HH', 
+                    '_ref_i_output_k_TC_HH', 
+                    ]                
+            else:
+                current_recording = []
+
+            print ('applying', _param)
+            cc.apply(ts.run_simulation, *_param['args'], all_section_recording=all_section_recording, all_synapse_recording=all_synapse_recording, current_recording=current_recording, dt=dt, **_param['kwargs'])
+
 
         # check for results and save
-        save_results(cc, numpy_flag=numpy_output, fw=(filenameout if numpy_output else fw))
+        if numpy_output:
+            save_results(cc, filenameout)
 
         # sleep
         time.sleep(twait)
 
+    cc.flush() # last
 
     # save results
-    save_results(cc, numpy_flag=numpy_output, fw=(filenameout if numpy_output else fw))
+    if numpy_output:
+        save_results(cc, filenameout)
+
 
 
     # close
