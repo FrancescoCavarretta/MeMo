@@ -8,7 +8,7 @@ class Model:
         def __init__(self, model, params, models_only=False, filter_out=["name"]):
             self.__model = model
             self.__index = -1
-            self.__params = params
+            self.__params = sorted( params ) # sort the parameters so the visit will be always replicable
             self.__models_only = models_only
             self.__filter_out = filter_out
             

@@ -32,7 +32,20 @@ def get_spike_count(t, v, tinit=2000, tend=10000, threshold=-20):
     """
     return get_spike_times(t, v, tinit=tinit, tend=tend, threshold=threshold).size
 
+def butter_lowpass_filter(data, cutoff, fs, order=5):
+    import numpy as np
+    from scipy.signal import butter, lfilter, freqz
 
+    def butter_lowpass(cutoff, fs, order=5):
+        nyq = 0.5 * fs
+        normal_cutoff = cutoff / nyq
+        b, a = butter(order, normal_cutoff, btype='low', analog=False)
+        return b, a
+
+
+    b, a = butter_lowpass(cutoff, fs, order=order)
+    y = lfilter(b, a, data)
+    return y
 
 def low_pass_filter(t, v, cutoff):
     """

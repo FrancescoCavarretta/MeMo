@@ -163,11 +163,12 @@ class SpikeTrain:
         bursts = []
         
         #tspk = np.array([])
+        #print (inter_distribution.theta)
         for t_burst_init in self.abbasi(inter_distribution, inter_time, inter_rate, min_inter_period, tstop):
             _tspk = self.abbasi(intra_distribution, time, rate, refractory_period, time[-1])
             _tspk = _tspk - _tspk[0] + t_burst_init
             bursts.append(_tspk)
-            #tspk = np.concatenate((tspk, _tspk))
+            
         return bursts #if tweak else tspk
             
     
@@ -188,8 +189,8 @@ class SpikeTrain:
         
     def combine_with_bursts(self):
         import numpy as np
+        
         for b in self.burst_model.product:
-            
             i = np.argmin(np.abs(b[0] - self.product))
             b = b + self.product[i] - b[0]
             

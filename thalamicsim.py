@@ -248,9 +248,9 @@ class InputToThalamus(model.Model):
 
 def mk_vm_microcircuit(cellid,
                        lesioned_flag,
-                       bg_param ={"Regularity":1.0, "MeanRate":60.0, "n":17,  "g":0.00082},
-                       rtn_param={"Regularity":1.0, "MeanRate":20.0, "n":7,   "g":0.00096},
-                       drv_param={"Regularity":1.0, "MeanRate":30.0, "n":41,  "g":0.00223, 'AmpaNmdaRatio':0.6 },
+                       bg_param ={"Regularity":1.0, "MeanRate":50.0, "n":17,  "g":0.00082, 'burst':None },
+                       rtn_param={"Regularity":1.0, "MeanRate":20.0, "n":7,   "g":0.00096, 'burst':None },
+                       drv_param={"Regularity":1.0, "MeanRate":28.0, "n":41,  "g":0.00223, 'AmpaNmdaRatio':0.6 },
                        mod_param={"Regularity":1.0, "MeanRate":15.0, "n":346, "g":0.00182, 'AmpaNmdaRatio':1.91},
                        tstop=5000.0):
 
@@ -265,11 +265,29 @@ def mk_vm_microcircuit(cellid,
 
 
   bgST = stn.SpikeTrain("abbasi", regularity=bg_param['Regularity'], mean_rate=bg_param["MeanRate"], tstop=tstop, refractory_period=3.0, time_unit="ms")
+
+  if bg_param['burst']:
+    print (bg_param)
+    bg_burst = stn.SpikeTrain('burst', Tpeak=bg_param['burst']['Tpeak'], Tdur=bg_param['burst']['Tdur'], 
+                       max_rate=bg_param['burst']['MaxRate'], 
+                       fast_rise=False,
+                       fast_decay=True, 
+                       refractory_period=1.5, 
+                       time_unit = 'ms', 
+                       intra_burst_k=3, intra_burst_theta = 0.1,
+                       min_rate=bg_param['burst']['MinRate'],
+                       regularity=bg_param['burst']['Regularity'],
+                       tstop=tstop,
+                       burst_mean_rate=bg_param['burst']['BurstMeanRate'],
+                       min_inter_period=bg_param['burst']['MinInterPeriod'])
+    
+    bgST.burst_model = bg_burst # add burst
+
+    
   rtnST = stn.SpikeTrain("abbasi", regularity=rtn_param['Regularity'], mean_rate=rtn_param["MeanRate"], tstop=tstop, refractory_period=3.0, time_unit="ms")
   drvST = stn.SpikeTrain("abbasi", regularity=drv_param['Regularity'], mean_rate=drv_param["MeanRate"], tstop=tstop, refractory_period=3.0, time_unit="ms")
   modST = stn.SpikeTrain("abbasi", regularity=mod_param['Regularity'], mean_rate=mod_param["MeanRate"], tstop=tstop, refractory_period=3.0, time_unit="ms")
-
-
+  
   si_drv = SynapticInputs("driver", drvSyn, drvST, cell)
   si_mod = SynapticInputs("modulator", modSyn, modST, cell)
   si_bg = SynapticInputs("nigral", bgSyn, bgST, cell)
@@ -330,7 +348,7 @@ def mk_vm_microcircuit_test(cellid,
 
 
 def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=False,
-        all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, t_checkpoint=200.0):
+        all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, t_checkpoint=200.0, save_spike_trains=False):
   
   import copy
   
@@ -338,6 +356,26 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
   r = precompiler.precompile(vmcircuit, seed)
   compiler.compile(r, base)
 
+
+  # output the spike trains
+  if save_spike_trains:
+    spike_times_collection = { 'nigral':[p.product for p in r["models"][i2t.nigral.spktr]["real_simobj"].product],
+                    'reticular':[p.product for p in r["models"][i2t.reticular.spktr]["real_simobj"].product],
+                    'modulator':[p.product for p in r["models"][i2t.modulator.spktr]["real_simobj"].product],
+                    'driver':[p.product for p in r["models"][i2t.driver.spktr]["real_simobj"].product] }
+    try:
+      filename_output = key[key.index('burst'):] + '_input.npy'
+    except:
+      filename_output = key + '_input.npy'
+    np.save(filename_output, spike_times_collection, allow_pickle=True)
+##  # showing nigral bursts
+##  import matplotlib.pyplot as plt
+##  for i, p in enumerate(r["models"][i2t.nigral.spktr]["real_simobj"].product):
+##    plt.eventplot(p.product, lineoffsets=i, color='red', linewidth=0.1)
+##  plt.show()
+
+  
+  
   # instantiate the recorders
   recordings = {}
   
@@ -436,12 +474,12 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
 
 
 
-def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recording=False, all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, **kwargs):
+def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recording=False, all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, save_spike_trains=True, **kwargs):
 
   params = {
-          'bg':{"Regularity":1.0, "MeanRate":60.0, "n":17,  "g":0.0015},
-          'rtn':{"Regularity":1.0, "MeanRate":20.0, "n":7,   "g":0.0008},
-          'drv':{"Regularity":1.0, "MeanRate":30.0, "n":41,  "g":0.0033, 'AmpaNmdaRatio':0.6 },
+          'bg':{"Regularity":1.0, "MeanRate":50.0, "n":17,  "g":0.0015, 'burst':None},
+          'rtn':{"Regularity":1.0, "MeanRate":20.0, "n":7,   "g":0.0008, 'burst':None},
+          'drv':{"Regularity":1.0, "MeanRate":28.0, "n":41,  "g":0.0033, 'AmpaNmdaRatio':0.6 },
           'mod':{"Regularity":1.0, "MeanRate":15.0, "n":346, "g":0.0018, 'AmpaNmdaRatio':1.91}
           }
   
@@ -449,8 +487,18 @@ def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recordin
     params_tokens = k.split('_')
     if len(params_tokens) == 2:
       _param_name, _param_key = params_tokens
+      print (_param_name, _param_key, v, params_tokens)
       if _param_key in params and _param_name in params[_param_key]:
         params[_param_key][_param_name] = v
+        
+    elif len(params_tokens) == 3:
+      _sub_param_name, _param_name, _param_key = params_tokens
+      print (_sub_param_name, _param_name, _param_key, v, params_tokens)
+      
+      if _param_key in params and _sub_param_name in params[_param_key]:
+        if params[_param_key][_sub_param_name] is None:
+          params[_param_key][_sub_param_name] = {}
+        params[_param_key][_sub_param_name][_param_name] = v
 
   for k1 in params:
     for k2 in params[k1]:
@@ -460,7 +508,7 @@ def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recordin
   
   return run(vmcircuit, i2t, tstop, (seed, seed), key,
              all_section_recording=all_section_recording, all_synapse_recording=all_synapse_recording, current_recording=current_recording, 
-             rec_invl=rec_invl, varname=varname, dt=dt)
+             rec_invl=rec_invl, varname=varname, dt=dt, save_spike_trains=save_spike_trains)
 
 
 def save_results(cc, fw=None, numpy_flag=False, verbose=False):
@@ -474,17 +522,20 @@ def save_results(cc, fw=None, numpy_flag=False, verbose=False):
             np.save(fw + '.' + key_res, data_res, allow_pickle=True)
 
                 
-def run_simulation_output(cellid, lesioned_flag, tstop, seed, key, all_section_recording=False, all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, **kwargs):
+def run_simulation_output(filename, cellid, lesioned_flag, tstop, seed, key, all_section_recording=False, all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, save_spike_trains=True, **kwargs):
   output = run_simulation(cellid, lesioned_flag, tstop, seed, key,
                           all_section_recording=all_section_recording, all_synapse_recording=all_synapse_recording, current_recording=current_recording,
-                          rec_invl=rec_invl, varname=varname, dt=dt, **kwargs)
+                          rec_invl=rec_invl, varname=varname, dt=dt, save_spike_trains=save_spike_trains, **kwargs)
 
-  fw = nwbio.FileWriter(key + ".nwb", "thalamic_data", "thalamic_data_id", max_size=None)
+  fw = nwbio.FileWriter(filename, "thalamic_data", "thalamic_data_id", max_size=None)
   save_results(output, fw=fw)
   fw.close()
 
   
 if __name__ == '__main__':
+  import warnings
+  warnings.simplefilter("ignore")
+  
   import numpy as np
 
   if '--dt' in sys.argv:
@@ -492,8 +543,8 @@ if __name__ == '__main__':
   else:
       dt = 0.1
 
-  if '--config_file' in sys.argv:
-    filenamein = sys.argv[sys.argv.index('--config_file')+1]
+  if '--configfile' in sys.argv:
+    filenamein = sys.argv[sys.argv.index('--configfile')+1]
     
 
         
@@ -533,6 +584,7 @@ if __name__ == '__main__':
   else:
     current_recording = []
 
+
   print (f"cellid={cellid}\nseed={seed}\n6ohda={'on' if lesioned_flag else 'off'}\ntstop={tstop}\nkey={key}\nother params{params}")
-  run_simulation_output(cellid, lesioned_flag, tstop, seed, key, all_section_recording=('--all_section_recording' in sys.argv), all_synapse_recording=('--all_synapse_recording' in sys.argv), current_recording=current_recording, **params) 
+  run_simulation_output('output_' + str(index) + '.nwb', cellid, lesioned_flag, tstop, seed, key, all_section_recording=('--all_section_recording' in sys.argv), all_synapse_recording=('--all_synapse_recording' in sys.argv), current_recording=current_recording, **params) 
   sys.exit(0)

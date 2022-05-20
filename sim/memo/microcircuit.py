@@ -7,18 +7,18 @@ from .link import Link
 class MicroCircuit:
     def __init__(self, name):
         self.name = name
-        self.models = set()
-        self.links = set()
+        self.models = []
+        self.links = []
         self.properties = dict()
         
     def add(self, x):
         if isinstance(x, Link):
-            self.links.add(x)
-            self.models.add(x.input)
-            self.models.add(x.output)
+            self.links.append(x)
+            self.models.append(x.input)
+            self.models.append(x.output)
             
         elif isinstance(x, Model):
-            self.models.add(x)
+            self.models.append(x)
         else:
             raise Exception(f"The object {x} cannot be part of the Model")
             

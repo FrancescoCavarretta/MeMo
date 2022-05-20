@@ -111,7 +111,7 @@ if __name__ == '__main__':
     try:
         end_index = int(sys.argv[sys.argv.index('--end_index')+1])
     except:
-        end_index = -1
+        end_index = None
         
     
     params = []
@@ -194,4 +194,5 @@ if __name__ == '__main__':
     if not numpy_output:
         fw.close()
 
+    cc.dview.wait()
     sys.exit(0)
