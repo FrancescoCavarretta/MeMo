@@ -248,9 +248,9 @@ class InputToThalamus(model.Model):
 
 def mk_vm_microcircuit(cellid,
                        lesioned_flag,
-                       bg_param ={"Regularity":1.0, "MeanRate":50.0, "n":17,  "g":0.00082, 'burst':None },
+                       bg_param ={"Regularity":1.0, "MeanRate":60.0, "n":17,  "g":0.00082, 'burst':None },
                        rtn_param={"Regularity":1.0, "MeanRate":20.0, "n":7,   "g":0.00096, 'burst':None },
-                       drv_param={"Regularity":1.0, "MeanRate":28.0, "n":41,  "g":0.00223, 'AmpaNmdaRatio':0.6 },
+                       drv_param={"Regularity":1.0, "MeanRate":30.0, "n":41,  "g":0.00223, 'AmpaNmdaRatio':0.6 },
                        mod_param={"Regularity":1.0, "MeanRate":15.0, "n":346, "g":0.00182, 'AmpaNmdaRatio':1.91},
                        tstop=5000.0):
 
@@ -348,7 +348,7 @@ def mk_vm_microcircuit_test(cellid,
 
 
 def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=False,
-        all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, t_checkpoint=200.0, save_spike_trains=False):
+        all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, t_checkpoint=200.0):
   
   import copy
   
@@ -356,25 +356,10 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
   r = precompiler.precompile(vmcircuit, seed)
   compiler.compile(r, base)
 
-
-  # output the spike trains
-  if save_spike_trains:
-    spike_times_collection = { 'nigral':[p.product for p in r["models"][i2t.nigral.spktr]["real_simobj"].product],
-                    'reticular':[p.product for p in r["models"][i2t.reticular.spktr]["real_simobj"].product],
-                    'modulator':[p.product for p in r["models"][i2t.modulator.spktr]["real_simobj"].product],
-                    'driver':[p.product for p in r["models"][i2t.driver.spktr]["real_simobj"].product] }
-    try:
-      filename_output = key[key.index('burst'):] + '_input.npy'
-    except:
-      filename_output = key + '_input.npy'
-    np.save(filename_output, spike_times_collection, allow_pickle=True)
-##  # showing nigral bursts
 ##  import matplotlib.pyplot as plt
 ##  for i, p in enumerate(r["models"][i2t.nigral.spktr]["real_simobj"].product):
 ##    plt.eventplot(p.product, lineoffsets=i, color='red', linewidth=0.1)
 ##  plt.show()
-
-  
   
   # instantiate the recorders
   recordings = {}
@@ -474,12 +459,12 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
 
 
 
-def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recording=False, all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, save_spike_trains=True, **kwargs):
+def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recording=False, all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, **kwargs):
 
   params = {
-          'bg':{"Regularity":1.0, "MeanRate":50.0, "n":17,  "g":0.0015, 'burst':None},
+          'bg':{"Regularity":1.0, "MeanRate":60.0, "n":17,  "g":0.0015, 'burst':None},
           'rtn':{"Regularity":1.0, "MeanRate":20.0, "n":7,   "g":0.0008, 'burst':None},
-          'drv':{"Regularity":1.0, "MeanRate":28.0, "n":41,  "g":0.0033, 'AmpaNmdaRatio':0.6 },
+          'drv':{"Regularity":1.0, "MeanRate":30.0, "n":41,  "g":0.0033, 'AmpaNmdaRatio':0.6 },
           'mod':{"Regularity":1.0, "MeanRate":15.0, "n":346, "g":0.0018, 'AmpaNmdaRatio':1.91}
           }
   
@@ -508,7 +493,7 @@ def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recordin
   
   return run(vmcircuit, i2t, tstop, (seed, seed), key,
              all_section_recording=all_section_recording, all_synapse_recording=all_synapse_recording, current_recording=current_recording, 
-             rec_invl=rec_invl, varname=varname, dt=dt, save_spike_trains=save_spike_trains)
+             rec_invl=rec_invl, varname=varname, dt=dt)
 
 
 def save_results(cc, fw=None, numpy_flag=False, verbose=False):
@@ -522,12 +507,12 @@ def save_results(cc, fw=None, numpy_flag=False, verbose=False):
             np.save(fw + '.' + key_res, data_res, allow_pickle=True)
 
                 
-def run_simulation_output(filename, cellid, lesioned_flag, tstop, seed, key, all_section_recording=False, all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, save_spike_trains=True, **kwargs):
+def run_simulation_output(cellid, lesioned_flag, tstop, seed, key, all_section_recording=False, all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, **kwargs):
   output = run_simulation(cellid, lesioned_flag, tstop, seed, key,
                           all_section_recording=all_section_recording, all_synapse_recording=all_synapse_recording, current_recording=current_recording,
-                          rec_invl=rec_invl, varname=varname, dt=dt, save_spike_trains=save_spike_trains, **kwargs)
+                          rec_invl=rec_invl, varname=varname, dt=dt, **kwargs)
 
-  fw = nwbio.FileWriter(filename, "thalamic_data", "thalamic_data_id", max_size=None)
+  fw = nwbio.FileWriter(key + ".nwb", "thalamic_data", "thalamic_data_id", max_size=None)
   save_results(output, fw=fw)
   fw.close()
 
@@ -543,8 +528,8 @@ if __name__ == '__main__':
   else:
       dt = 0.1
 
-  if '--configfile' in sys.argv:
-    filenamein = sys.argv[sys.argv.index('--configfile')+1]
+  if '--config_file' in sys.argv:
+    filenamein = sys.argv[sys.argv.index('--config_file')+1]
     
 
         
@@ -586,5 +571,5 @@ if __name__ == '__main__':
 
 
   print (f"cellid={cellid}\nseed={seed}\n6ohda={'on' if lesioned_flag else 'off'}\ntstop={tstop}\nkey={key}\nother params{params}")
-  run_simulation_output('output_' + str(index) + '.nwb', cellid, lesioned_flag, tstop, seed, key, all_section_recording=('--all_section_recording' in sys.argv), all_synapse_recording=('--all_synapse_recording' in sys.argv), current_recording=current_recording, **params) 
+  run_simulation_output(cellid, lesioned_flag, tstop, seed, key, all_section_recording=('--all_section_recording' in sys.argv), all_synapse_recording=('--all_synapse_recording' in sys.argv), current_recording=current_recording, **params) 
   sys.exit(0)
