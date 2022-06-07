@@ -27,6 +27,8 @@ import numpy as np
 
 import sys
 
+import warnings
+warnings.filterwarnings("ignore")
 
 
 
@@ -76,7 +78,6 @@ class Cell:
 
     if self.product is None:
       self.bpo_cell = self.mk_cell_model(self.cellid, control=(not self.lesioned_flag))
-      #print ('cell', self.cellid, self.lesioned_flag)
       self.cell = self.bpo_cell.icell
       self.morph_table, self.section = Cell.bpo2memo_cell(self.bpo_cell)
       self.product = { "Cell":self.section, "MorphologyTable":self.morph_table }
@@ -99,7 +100,7 @@ class Cell:
     
     section_collection = {}
     h.distance(sec=bpo_cell.icell.soma[0])
-    tab = pd.DataFrame(columns=["type", "segment", "name", "number", "diam", "len", "dist"])
+    tab = pd.DataFrame()
     for section_type in bpo_cell.seclist_names:
       section_collection[section_type] = {}
       if section_type != "all":
@@ -107,16 +108,14 @@ class Cell:
           section_number = int(h.secname(sec=section).split("[")[-1].replace("]", ""))
           section_collection[section_type][section_number] = section
           for segment in section.allseg():
-            tab = tab.append({ "type":section_type,
-                               "segment":segment.x,
-                               "name":section,
-                               "number":section_number,
-                               "diam":segment.diam,
-                               "len":section.L / section.nseg,
-                               "dist":h.distance(segment.x, sec=section),
-                               "order":Cell.branch_order(section, bpo_cell.icell.soma[0])},
-                             ignore_index=True)
-            
+            tab = pd.concat([tab, pd.DataFrame({ "type":section_type,
+                                                 "segment":segment.x,
+                                                 "name":section,
+                                                 "number":section_number,
+                                                 "diam":segment.diam,
+                                                 "len":section.L / section.nseg,
+                                                 "dist":h.distance(segment.x, sec=section),
+                                                 "order":Cell.branch_order(section, bpo_cell.icell.soma[0]) })])            
     tab["segment"] = tab["segment"].astype(float)
     tab["dist"] = tab["dist"].astype(float)
     tab["len"] = tab["len"].astype(float)
@@ -134,7 +133,7 @@ class Cell:
             section_type = [ section_type ]
         _f = pd.DataFrame()
         for _st in section_type:
-            _f = _f.append(f[f["type"] == _st])
+            _f = pd.concat([_f, pd.DataFrame(f[f["type"] == _st])])
         f = _f
         del _f, _st 
     
@@ -248,10 +247,10 @@ class InputToThalamus(model.Model):
 
 def mk_vm_microcircuit(cellid,
                        lesioned_flag,
-                       bg_param ={"Regularity":1.0, "MeanRate":60.0, "n":17,  "g":0.00082, 'burst':None },
-                       rtn_param={"Regularity":1.0, "MeanRate":20.0, "n":7,   "g":0.00096, 'burst':None },
-                       drv_param={"Regularity":1.0, "MeanRate":30.0, "n":41,  "g":0.00223, 'AmpaNmdaRatio':0.6 },
-                       mod_param={"Regularity":1.0, "MeanRate":15.0, "n":346, "g":0.00182, 'AmpaNmdaRatio':1.91},
+                       bg_param ={"Regularity":1.0, "MeanRate":60.0, "n":17,  "g":0.0010, 'burst':None },
+                       rtn_param={"Regularity":1.0, "MeanRate":10.0, "n":7,   "g":0.0006, 'burst':None },
+                       drv_param={"Regularity":1.0, "MeanRate":30.0, "n":35,  "g":0.0021, 'AmpaNmdaRatio':0.6 },
+                       mod_param={"Regularity":1.0, "MeanRate":15.0, "n":346, "g":0.0020, 'AmpaNmdaRatio':1.91},
                        tstop=5000.0):
 
   
@@ -267,7 +266,6 @@ def mk_vm_microcircuit(cellid,
   bgST = stn.SpikeTrain("abbasi", regularity=bg_param['Regularity'], mean_rate=bg_param["MeanRate"], tstop=tstop, refractory_period=3.0, time_unit="ms")
 
   if bg_param['burst']:
-    print (bg_param)
     bg_burst = stn.SpikeTrain('burst', Tpeak=bg_param['burst']['Tpeak'], Tdur=bg_param['burst']['Tdur'], 
                        max_rate=bg_param['burst']['MaxRate'], 
                        fast_rise=False,
@@ -462,10 +460,10 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
 def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recording=False, all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, **kwargs):
 
   params = {
-          'bg':{"Regularity":1.0, "MeanRate":60.0, "n":17,  "g":0.0015, 'burst':None},
-          'rtn':{"Regularity":1.0, "MeanRate":20.0, "n":7,   "g":0.0008, 'burst':None},
-          'drv':{"Regularity":1.0, "MeanRate":30.0, "n":41,  "g":0.0033, 'AmpaNmdaRatio':0.6 },
-          'mod':{"Regularity":1.0, "MeanRate":15.0, "n":346, "g":0.0018, 'AmpaNmdaRatio':1.91}
+          'bg':{"Regularity":1.0, "MeanRate":60.0, "n":17,  "g":0.0010, 'burst':None},
+          'rtn':{"Regularity":1.0, "MeanRate":10.0, "n":7,   "g":0.0006, 'burst':None},
+          'drv':{"Regularity":1.0, "MeanRate":30.0, "n":35,  "g":0.0021, 'AmpaNmdaRatio':0.6 },
+          'mod':{"Regularity":1.0, "MeanRate":15.0, "n":346, "g":0.0020, 'AmpaNmdaRatio':1.91}
           }
   
   for k, v in kwargs.items():
@@ -495,7 +493,7 @@ def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recordin
              all_section_recording=all_section_recording, all_synapse_recording=all_synapse_recording, current_recording=current_recording, 
              rec_invl=rec_invl, varname=varname, dt=dt)
 
-
+  
 def save_results(cc, fw=None, numpy_flag=False, verbose=False):
     import numpy as np
     for key_res, data_res in cc.items():

@@ -1,3 +1,8 @@
+ 
+def test_func(*args, **kwargs):
+  import numpy as np
+  return { (str(args)+str(kwargs)):np.array([[0.0]*10, [1.0]*10]) }
+
 class CustomClient:
     def __init__(self, filename, max_size=None):
         import os
@@ -152,6 +157,7 @@ if __name__ == '__main__':
     params = []
     for c in np.load(filenamein, allow_pickle=True).tolist()[init_index:end_index]:
         c_cpy = dict(c.copy())
+        c['tstop']=50.0
         del c_cpy['cellid'], c_cpy['lesioned_flag'], c_cpy['tstop'], c_cpy['seed'], c_cpy['key']
         params.append({'args':(c['cellid'], c['lesioned_flag'], c['tstop'], c['seed'], c['key']),
                        'kwargs':c_cpy})
@@ -207,8 +213,8 @@ if __name__ == '__main__':
         while len(params) and cc.any_available():
             _param = params.pop()
             
-            print ('applying', _param)
-            cc.apply(ts.run_simulation, _param['args'][0], _param['args'][1], _param['args'][2], _param['args'][3], _param['args'][4]) #, all_section_recording=all_section_recording, all_synapse_recording=all_synapse_recording, current_recording=current_recording, dt=dt, **_param['kwargs'])
+            #print ('applying', _param)
+            cc.apply(ts.run_simulation, *_param['args'], all_section_recording=all_section_recording, all_synapse_recording=all_synapse_recording, current_recording=current_recording, dt=dt, **_param['kwargs'])
 
 
         # check for results and save

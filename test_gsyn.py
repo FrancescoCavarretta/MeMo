@@ -2,8 +2,8 @@ import thalamicsim as ts
 from thalamicsim import mk_vm_microcircuit_test, base, compiler, precompiler, rec
 import numpy as np
 
-ntrial = 10
-nmodel = 10
+ntrial = 5
+nmodel = len(np.load('mkcell/test_model_control_edyta_test_good.npy', allow_pickle=True).tolist())
 
 
 
@@ -95,7 +95,7 @@ def search_gsyn(input_name, peak_target, vclamp, n=1, tstop=5500.0, gmin=0.0, gm
     g = []
     
     for i in range(nmodel):
-        vmcirc, i2t = mk_vm_microcircuit_test(i)
+        vmcirc, i2t = mk_vm_microcircuit_test(i, False)
         
         i2t.n_reticular = 0
         i2t.n_nigral = 0
@@ -113,52 +113,50 @@ def search_gsyn(input_name, peak_target, vclamp, n=1, tstop=5500.0, gmin=0.0, gm
             
 g_mean_rtn =  search_gsyn("reticular",  24.43 / 1000.0,     -9.3,  gmax=0.0015, ena=145.2, ek=-209.5, celsius=24)
 
-g_mean_cx= search_gsyn("modulator",  28.4 / 1000.0,       -79.3, ena=145.2, ek=-209.5, celsius=24)
+g_mean_cx = search_gsyn("modulator",  28.4 / 1000.0,       -79.3, ena=145.2, ek=-209.5, celsius=24)
 
 g_mean_cn_vm = search_gsyn("driver",  165.0 / 1000.0,   -68.4, ena=64.8, n=4, ek=-107.1, celsius=34) 
-g_mean_cn_vl = search_gsyn("driver",  847.0 / 1000.0,   -68.4, ena=64.8, n=4, ek=-107.1, celsius=34)
+g_mean_cn_vl = search_gsyn("driver",  847.7 / 1000.0,   -68.4, ena=64.8, n=4, ek=-107.1, celsius=34)
 
-g_min_cn_vm  = search_gsyn("driver", (165.0-139.2) / 1000.0, -68.4, n=2, ena=64.8, ek=-107.1, celsius=34)
-g_max_cn_vm  = search_gsyn("driver", (165.0+139.2) / 1000.0, -68.4, n=5, ena=64.8, ek=-107.1, celsius=34)
+#g_min_cn_vm  = search_gsyn("driver", (165.0-139.2) / 1000.0, -68.4, n=2, ena=64.8, ek=-107.1, celsius=34)
+#g_max_cn_vm  = search_gsyn("driver", (165.0+139.2) / 1000.0, -68.4, n=5, ena=64.8, ek=-107.1, celsius=34)
 
-g_min_ppn  = search_gsyn("driver", (170.0-116.6) / 1000.0, -62.4, ena=58, ek=-250.0, celsius=32)
-g_mean_ppn = search_gsyn("driver", 170.0 / 1000.0,         -62.4, ena=58, ek=-250.0, celsius=32) 
-g_max_ppn  = search_gsyn("driver", (170.0+116.6) / 1000.0, -62.4, ena=58, ek=-250.0, celsius=32)
+#g_min_sc  = search_gsyn("driver", (238.0-82.5) / 1000.0, -70, ena=109.3, ek=-103.9, celsius=32)
+#g_mean_sc = search_gsyn("driver",  238.0 / 1000.0,       -70, ena=109.3, ek=-103.9, celsius=32) 
+#g_max_sc  = search_gsyn("driver", (238.0+82.5) / 1000.0, -70, ena=109.3, ek=-103.9, celsius=32)
 
-g_min_sc  = search_gsyn("driver", (238.0-82.5) / 1000.0, -70, ena=109.3, ek=-103.9, celsius=32)
-g_mean_sc = search_gsyn("driver",  238.0 / 1000.0,       -70, ena=109.3, ek=-103.9, celsius=32) 
-g_max_sc  = search_gsyn("driver", (238.0+82.5) / 1000.0, -70, ena=109.3, ek=-103.9, celsius=32)
-
-g_mean_snr_1 = search_gsyn("nigral",  2.7 * 4.1 / 1000.0, -64.0, n=1, ena=60.1, ek=-105.8, celsius=32) 
-g_mean_snr_3 = search_gsyn("nigral",  2.7 * 4.1 / 1000.0, -64.0, n=3, ena=60.1, ek=-105.8, celsius=32) 
-g_mean_snr_13= search_gsyn("nigral", 19.4 * 4.1 / 1000.0, -64.0, n=13, ena=60.1, ek=-105.8, celsius=32)
+#g_mean_snr_1 = search_gsyn("nigral",  2.7 * 4.1 / 1000.0, -64.0, n=1, ena=60.1, ek=-105.8, celsius=32) 
+#g_mean_snr_3 = search_gsyn("nigral",  2.7 * 4.1 / 1000.0, -64.0, n=3, ena=60.1, ek=-105.8, celsius=32) 
+g_mean_snr_13 = search_gsyn("nigral", 19.4 * 4.1 / 1000.0, -64.0, n=13, ena=60.1, ek=-105.8, celsius=32)
 
 print ("rtn", g_mean_rtn)
 print ("cx", g_mean_cx)
 print ("vm", g_mean_cn_vm)
 print ("vl", g_mean_cn_vl)
-print ("cn", g_min_cn_vm, g_max_cn_vm)
-print ("mlr/ppn", g_min_ppn, g_mean_ppn, g_max_ppn)
-print ("mlr/ppn", g_min_sc, g_mean_sc, g_max_sc)
-print ("SNRx1", g_mean_snr_1, "SNRx3", g_mean_snr_3, "SNRx13", g_mean_snr_13)
+#print ("SC", g_min_sc, g_mean_sc, g_max_sc)
+#print ("SNRx1", g_mean_snr_1, "SNRx3", g_mean_snr_3, "SNRx13", g_mean_snr_13)
+print ("SNRx13", g_mean_snr_13)
 
 
 
-g = {"SNRx1":g_mean_snr_1,
-     "SNRx3":g_mean_snr_3,
-     "SNRx13":g_mean_snr_13,
+##g = {"SNRx1":g_mean_snr_1,
+##     "SNRx3":g_mean_snr_3,
+##     "SNRx13":g_mean_snr_13,
+##     "CX":g_mean_cx,
+##     "CN_VM":g_mean_cn_vm,
+##     "CN_VL":g_mean_cn_vl,
+##     "CN_VM_MIN":g_min_cn_vm,
+##     "CN_VM_MAX":g_max_cn_vm,
+##     "SC_MIN":g_min_sc,
+##     "SC_MEAN":g_mean_sc,
+##     "SC_MAX":g_max_sc,
+##     "rtn": g_mean_rtn}
+
+g = {"SNRx13":g_mean_snr_13,
      "CX":g_mean_cx,
      "CN_VM":g_mean_cn_vm,
      "CN_VL":g_mean_cn_vl,
-     "CN_VM_MIN":g_min_cn_vm,
-     "CN_VM_MAX":g_max_cn_vm,
-     "PPN_MIN":g_min_ppn,
-     "PPN_MEAN":g_mean_ppn,
-     "PPN_MAX":g_max_ppn,
-     "SC_MIN":g_min_sc,
-     "SC_MEAN":g_mean_sc,
-     "SC_MAX":g_max_sc,
-     "rtn", g_mean_rtn}
+     "rtn": g_mean_rtn}
 
 np.save("gsyn.npy", g, allow_pickle=True)
 

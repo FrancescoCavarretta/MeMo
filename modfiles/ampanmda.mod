@@ -62,7 +62,7 @@ NEURON {
         
 	RANGE Cdur, Alpha, Beta, Rinf, Rtau, ampatau
 
-        RANGE q10_ampa, temp0_ampa, q10_nmda, temp0_nmda, tadj_ampa, tadj_nmda, ampatau_in
+        :RANGE q10_ampa, temp0_ampa, q10_nmda, temp0_nmda, tadj_ampa, tadj_nmda, ampatau_in
         
         RANGE gnmda, gampa, i, inmda, iampa, g
 }
@@ -94,10 +94,10 @@ PARAMETER {
 	ampatau = 3 (ms)
 
         
-        q10_ampa = 2.1
-        temp0_ampa = 27
-        q10_nmda = 1.75
-        temp0_nmda = 27        
+        :q10_ampa = 2.1
+        :temp0_ampa = 27
+        :q10_nmda = 1.75
+        :temp0_nmda = 27        
 
 }
 
@@ -118,8 +118,8 @@ ASSIGNED {
 
         r0
 
-        tadj_ampa
-        tadj_nmda
+        :tadj_ampa
+        :tadj_nmda
         ampatau_in
 }
 
@@ -144,10 +144,10 @@ INITIAL {
         
         Rnmda = 0
         Rnmda_max = exp(-3*Cdur/Rtau) * Rinf
-        tadj_ampa=q10_ampa^((celsius-temp0_ampa)/10)
-        tadj_nmda=q10_nmda^((celsius-temp0_nmda)/10)
+        :tadj_ampa=q10_ampa^((celsius-temp0_ampa)/10)
+        :tadj_nmda=q10_nmda^((celsius-temp0_nmda)/10)
         
-        ampatau_in=ampatau/tadj_ampa
+        ampatau_in=ampatau  :/tadj_ampa
 }
 
 BREAKPOINT {
