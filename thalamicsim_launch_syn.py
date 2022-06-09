@@ -121,6 +121,7 @@ if __name__ == '__main__':
     import time
 
     twait = 1.0 # seconds
+
     
     filenamein = sys.argv[sys.argv.index('--filenamein')+1]
     filenameout = sys.argv[sys.argv.index('--filenameout')+1]
@@ -211,7 +212,7 @@ if __name__ == '__main__':
             _param = params.pop()
             
             print ('applying', _param)
-            cc.apply(ts.run_simulation, _param['args'][0], _param['args'][1], _param['args'][2], _param['args'][3], _param['args'][4]) #, all_section_recording=all_section_recording, all_synapse_recording=all_synapse_recording, current_recording=current_recording, dt=dt, **_param['kwargs'])
+            cc.apply(ts.run_simulation, *_param['args'], all_section_recording=all_section_recording, all_synapse_recording=all_synapse_recording, current_recording=current_recording, dt=dt, **_param['kwargs'])
 
 
         # check for results and save
