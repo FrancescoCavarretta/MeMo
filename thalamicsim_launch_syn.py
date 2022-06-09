@@ -14,6 +14,7 @@ class CustomClient:
         self.max_size = max_size
         self.file_index = 0
         self.fw = nwbio.FileWriter(self.filename  + ("_%d" % self.file_index) + ".nwb", "thalamic_data", "thalamic_data_id", max_size=None)
+
         
 
 
@@ -45,7 +46,9 @@ class CustomClient:
                 
                 if out:
                     for key_res, data_res in out.items():
-                        self.__fw_add(key_res, data_res[:, 0], data_res[:, 1])
+##                        print (data_res[:, 0])
+##                        print (data_res[:, 1])
+                        self.__fw_add(str(key_res), data_res[:, 0].astype(float), data_res[:, 1].astype(float))
                         
                     # if the file was defined store data
                     #if self.fw:
@@ -90,7 +93,7 @@ class CustomClient:
 
 
 
-    def __del__(self):
+    def close(self):
         self.flush()
         self.fw.close()
         
@@ -232,6 +235,6 @@ if __name__ == '__main__':
     #fw.close()
 
     # delete client manager
-    del cc
+    cc.close()
     
     sys.exit(0)

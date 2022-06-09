@@ -247,20 +247,20 @@ class InputToThalamus(model.Model):
 
 def mk_vm_microcircuit(cellid,
                        lesioned_flag,
-                       bg_param ={"Regularity":1.0, "MeanRate":60.0, "n":17,  "g":0.0010, 'burst':None },
+                       bg_param ={"Regularity":1.0, "MeanRate":50.0, "n":17,  "g":0.0010, 'burst':None },
                        rtn_param={"Regularity":1.0, "MeanRate":10.0, "n":7,   "g":0.0006, 'burst':None },
-                       drv_param={"Regularity":1.0, "MeanRate":30.0, "n":35,  "g":0.0021, 'AmpaNmdaRatio':0.6 },
-                       mod_param={"Regularity":1.0, "MeanRate":15.0, "n":346, "g":0.0020, 'AmpaNmdaRatio':1.91},
+                       drv_param={"Regularity":1.0, "MeanRate":30.0, "n":35,  "g":0.0021, 'NmdaAmpaRatio':0.6 },
+                       mod_param={"Regularity":1.0, "MeanRate":15.0, "n":346, "g":0.0020, 'NmdaAmpaRatio':1.91},
                        tstop=5000.0):
 
   
   cell =  nrn.Cell("TC", cellid=cellid, lesioned_flag=lesioned_flag)    
 
-  InhSyn = nrn.Synapse("GABAA", erev=-75.0, tau=14.0)
+  InhSyn = nrn.Synapse("GABAA", erev=-76.4, tau=14.0)
   bgSyn = InhSyn()
   rtnSyn = InhSyn()
-  drvSyn = nrn.Synapse("AmpaNmda", erev=0.0, ratio=drv_param['AmpaNmdaRatio'])
-  modSyn = nrn.Synapse("AmpaNmda", erev=0.0, ratio=mod_param['AmpaNmdaRatio'])
+  drvSyn = nrn.Synapse("AmpaNmda", erev=0.0, ratio=drv_param['NmdaAmpaRatio'])
+  modSyn = nrn.Synapse("AmpaNmda", erev=0.0, ratio=mod_param['NmdaAmpaRatio'])
 
 
   bgST = stn.SpikeTrain("abbasi", regularity=bg_param['Regularity'], mean_rate=bg_param["MeanRate"], tstop=tstop, refractory_period=3.0, time_unit="ms")
@@ -311,37 +311,7 @@ def mk_vm_microcircuit(cellid,
 
 
 
-def mk_vm_microcircuit_test(cellid,
-                            lesioned_flag,
-                            tstop=5000.0):
 
-  
-  cell =  nrn.Cell("TC", cellid=cellid, lesioned_flag=lesioned_flag)    
-
-  InhSyn = nrn.Synapse("GABAA", erev=-75.0, tau=14.0)
-  bgSyn = InhSyn()
-  rtnSyn = InhSyn()
-  drvSyn = nrn.Synapse("AmpaNmda", erev=0.0, ratio=0.6)
-  modSyn = nrn.Synapse("AmpaNmda", erev=0.0, ratio=1.91)
-
-
-  bgST = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
-  rtnST = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
-  drvST = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
-  modST = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
-
-
-  si_drv = SynapticInputs("driver", drvSyn, drvST, cell)
-  si_mod = SynapticInputs("modulator", modSyn, modST, cell)
-  si_bg = SynapticInputs("nigral", bgSyn, bgST, cell)
-  si_rtn = SynapticInputs("reticular", rtnSyn, rtnST, cell)
-
-  i2t = InputToThalamus("InputToVMThalamus", cell, si_drv, si_mod, si_bg, si_rtn)
-
-  vmcircuit = mc.MicroCircuit("VMThalamus")
-  vmcircuit.add(i2t)
-  
-  return vmcircuit, i2t
 
 
 
@@ -349,6 +319,7 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
         all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, t_checkpoint=200.0):
   
   import copy
+  from neuron import h
   
   # precompile & compile the network representation
   r = precompiler.precompile(vmcircuit, seed)
@@ -416,6 +387,9 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
   # run the NEURON simulation  
   h.load_file("stdgui.hoc")
 
+  # experimental conditions from Inagaki et al
+  base.set(celsius=32, ena=76.4, ek=-104.9)
+
   # check point
   
   h.finitialize(v_init)
@@ -462,9 +436,11 @@ def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recordin
   params = {
           'bg':{"Regularity":1.0, "MeanRate":60.0, "n":17,  "g":0.0010, 'burst':None},
           'rtn':{"Regularity":1.0, "MeanRate":10.0, "n":7,   "g":0.0006, 'burst':None},
-          'drv':{"Regularity":1.0, "MeanRate":30.0, "n":35,  "g":0.0021, 'AmpaNmdaRatio':0.6 },
-          'mod':{"Regularity":1.0, "MeanRate":15.0, "n":346, "g":0.0020, 'AmpaNmdaRatio':1.91}
+          'drv':{"Regularity":1.0, "MeanRate":30.0, "n":35,  "g":0.0021, 'NmdaAmpaRatio':0.6 },
+          'mod':{"Regularity":1.0, "MeanRate":15.0, "n":346, "g":0.0020, 'NmdaAmpaRatio':1.91}
           }
+
+
   
   for k, v in kwargs.items():
     params_tokens = k.split('_')
