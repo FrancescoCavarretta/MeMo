@@ -7,7 +7,7 @@ import sim.memo.distribution as distr
 import sim.compiler.precompiler as precompiler
 import sim.compiler as compiler
 import sim.compiler.neuron as base
-import sim.compiler.neuron.util.recorder as recorder
+import sim.compiler.neuron.util.recorder as rec
 
 import sim.memo.microcircuit as mc
 
@@ -23,8 +23,7 @@ import pandas as pd
 
 import numpy as np
 
-import gc
-gc.collect(2)
+
 
 import sys
 
@@ -43,18 +42,11 @@ bodor_et_al2008["weights"] /= np.sum(bodor_et_al2008["weights"])
 class Cell:
     
   def __del__(self):
-      # remove all the sections
-      from neuron import h
-      
-      for _section_list in self.section.values():
-        for s in _section_list.values():
-          h.delete_section(sec=s)
-          
       del self.bpo_cell
       del self.cell
       del self.section
       del self.product 
-
+      
       self.bpo_cell = self.cell = self.section = self.product = None
       
     
@@ -324,14 +316,14 @@ def mk_vm_microcircuit(cellid,
 
 
 def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=False,
-        all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, t_checkpoint=1000.0):
+        all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, t_checkpoint=200.0):
   
   import copy
   from neuron import h
   
   # precompile & compile the network representation
-  retsim = precompiler.precompile(vmcircuit, seed)
-  compiler.compile(retsim, base)
+  r = precompiler.precompile(vmcircuit, seed)
+  compiler.compile(r, base)
 
 ##  import matplotlib.pyplot as plt
 ##  for i, p in enumerate(r["models"][i2t.nigral.spktr]["real_simobj"].product):
@@ -343,9 +335,9 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
   
   # instantiate recorders for sections
   if all_section_recording:
-    section = retsim["models"][i2t.cell]["real_simobj"].section
+    section = r["models"][i2t.cell]["real_simobj"].section
   else:
-    section = {"somatic":retsim["models"][i2t.cell]["real_simobj"].section["somatic"]}      
+    section = {"somatic":r["models"][i2t.cell]["real_simobj"].section["somatic"]}      
 
   # nwb key id format
   fmt = key + '.%s.%d(%f).%s'
@@ -364,7 +356,7 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
       for x in arcs:
         # voltage membrane, currents
         for _varname in ( varname + current_recording ):
-          recordings[fmt % (sectype, i, x, _varname)] = recorder.Recorder(getattr(s(x), _varname), seg=s(x), dt=dt)
+          recordings[fmt % (sectype, i, x, _varname)] = rec.Recorder(getattr(s(x), _varname), seg=s(x), dt=dt)
 
 
 
@@ -374,7 +366,7 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
     fmt = key + '.syn.%s[%d].%s'
     
     for syngroup in [i2t.driver, i2t.modulator, i2t.reticular, i2t.nigral]:
-      for isyn, syn2cell in enumerate(retsim['models'][syngroup]['submodels']['syn2cell']['real_simobj'].product):
+      for isyn, syn2cell in enumerate(r['models'][syngroup]['submodels']['syn2cell']['real_simobj'].product):
         
         syn2cell_product = copy.copy(syn2cell.product)
 
@@ -385,7 +377,7 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
         syn = syn2cell_product[list(syn2cell_product.keys())[0]]
 
         for _varname in ['_ref_i']: #, '_ref_g']:
-          recordings[fmt % (retsim['models'][syngroup]['object'].name, isyn, _varname)] = recorder.Recorder(getattr(syn, _varname), seg=s(x), dt=dt)
+          recordings[fmt % (r['models'][syngroup]['object'].name, isyn, _varname)] = rec.Recorder(getattr(syn, _varname), seg=s(x), dt=dt)
 
   # print recording list
   for k in recordings:
@@ -399,23 +391,10 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
   base.set(celsius=32, ena=76.4, ek=-104.9)
 
   # check point
-
-  
-
-  #h.cvode_active(1)
-  h.cvode.cache_efficient(1)
-  h.cvode_active(0)
-  
-  pc = h.ParallelContext(1)
-  
-  from neuron import coreneuron
-  coreneuron.enable = True
-  coreneuron.verbose = 0
-  #coreneuron.gpu = True
   
   h.finitialize(v_init)
   h.stdinit()
-  h.t = 0.
+  h.cvode_active(1)
   
   first_run = True
   
@@ -431,31 +410,27 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
     
     
     if first_run:
-      #h.tstop = tnext # update
-      pc.psolve(tnext)
+      h.tstop = tnext # update
+      h.run(tnext)
     else:
-      pc.psolve(tnext)
+      h.continuerun(tnext)
 
     # verbose
-    #print ('checkpoint', h.t, tnext)
+    print ('checkpoint', h.t, tnext)
     
     # flush recordings
-    for rec in recordings.values():
-      rec._flush()
+    for r in recordings.values():
+      r._flush()
 
     first_run = False
     
     t = tnext
 
-  # clear all the objects
-  compiler.clear(retsim)
-
-  pc.done()
-
-  pc = None
+  # clean the memory
+  compiler.clear(r)
   
   # return
-  return { k:rec.get(dt=dt) for k, rec in recordings.items() }
+  return { k:r.get(dt=dt) for k, r in recordings.items() }
 
 
 
@@ -510,15 +485,14 @@ def save_results(cc, fw=None, numpy_flag=False, verbose=False):
 
                 
 def run_simulation_output(cellid, lesioned_flag, tstop, seed, key, all_section_recording=False, all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, **kwargs):
-    import sys
-    output = run_simulation(cellid, lesioned_flag, tstop, seed, key,
-                            all_section_recording=all_section_recording, all_synapse_recording=all_synapse_recording,
-                            current_recording=current_recording, rec_invl=rec_invl, varname=varname, dt=dt, **kwargs)
+  output = run_simulation(cellid, lesioned_flag, tstop, seed, key,
+                          all_section_recording=all_section_recording, all_synapse_recording=all_synapse_recording, current_recording=current_recording,
+                          rec_invl=rec_invl, varname=varname, dt=dt, **kwargs)
 
-    fw = nwbio.FileWriter(key + ".nwb", "thalamic_data", "thalamic_data_id", max_size=None)
-    save_results(output, fw=fw)
-    fw.close()
-    
+  fw = nwbio.FileWriter(key + ".nwb", "thalamic_data", "thalamic_data_id", max_size=None)
+  save_results(output, fw=fw)
+  fw.close()
+
   
 if __name__ == '__main__':
   import warnings
@@ -574,13 +548,5 @@ if __name__ == '__main__':
 
 
   print (f"cellid={cellid}\nseed={seed}\n6ohda={'on' if lesioned_flag else 'off'}\ntstop={tstop}\nkey={key}\nother params{params}")
-  run_simulation_output(cellid,
-                        lesioned_flag,
-                        tstop,
-                        seed,
-                        key,
-                        all_section_recording=('--all_section_recording' in sys.argv),
-                        all_synapse_recording=('--all_synapse_recording' in sys.argv),
-                        current_recording=current_recording,
-                        **params) 
+  run_simulation_output(cellid, lesioned_flag, tstop, seed, key, all_section_recording=('--all_section_recording' in sys.argv), all_synapse_recording=('--all_synapse_recording' in sys.argv), current_recording=current_recording, **params) 
   sys.exit(0)

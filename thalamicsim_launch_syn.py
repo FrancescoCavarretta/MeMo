@@ -1,3 +1,5 @@
+
+
 class CustomClient:
     def __init__(self, filename, max_size=None):
         import os
@@ -45,10 +47,20 @@ class CustomClient:
                 out = self.rc[i].get()
                 
                 if out:
-                    for key_res, data_res in out.items():
-##                        print (data_res[:, 0])
-##                        print (data_res[:, 1])
-                        self.__fw_add(str(key_res), data_res[:, 0].astype(float), data_res[:, 1].astype(float))
+                    # merge
+                    import sim.nwbio as nwbio
+                    import os
+                    fr = nwbio.FileReader(out)
+                    for key_res in fr.nwbfile.acquisition.keys():
+                        self.__fw_add(key_res, *fr.read(key_res))
+                    fr.close()
+                    # remove file
+                    os.system('rm ' + out)
+                    
+##                    for key_res, data_res in out.items():
+####                        print (data_res[:, 0])
+####                        print (data_res[:, 1])
+##                        self.__fw_add(str(key_res), data_res[:, 0].astype(float), data_res[:, 1].astype(float))
                         
                     # if the file was defined store data
                     #if self.fw:
@@ -96,10 +108,40 @@ class CustomClient:
     def close(self):
         self.flush()
         self.fw.close()
+
+
+def to_command_line(cellid, lesioned_flag, tstop, seed, key,
+                    all_section_recording, all_synapse_recording, all_current_recording, **kwargs):
+    s = '--cellid %d' % cellid
+
+    if lesioned_flag:
+        s +=  ' --6ohda'
         
-    
+    s +=  ' --tstop %f' % tstop
+    s +=  ' --seed %d' % seed   
+    s +=  ' --key %s' % key
+
+    if all_section_recording:
+        s += ' --all_section_recording'
+
+    if all_synapse_recording:
+        s += ' --all_synapse_recording'
+
+    if all_current_recording:
+        s += ' --all_current_recording' 
+
+    for k, v in kwargs.items():
+        s += ' --' + k + '=' + str(v)
+
+    return s
+        
         
 if __name__ == '__main__':
+    def simstub(cmd, key):
+        import os
+        os.system(cmd)
+        return key + '.nwb'
+
 
     #def save_results(cc, fw, verbose=True):
     #    import numpy as np
@@ -116,7 +158,7 @@ if __name__ == '__main__':
     
 #    import sim.nwbio as nwbio
     import numpy as np
-    import thalamicsim as ts
+    #import thalamicsim as ts
 
     import time
 
@@ -211,8 +253,9 @@ if __name__ == '__main__':
         while len(params) and cc.any_available():
             _param = params.pop()
             
-            print ('applying', _param)
-            cc.apply(ts.run_simulation, *_param['args'], all_section_recording=all_section_recording, all_synapse_recording=all_synapse_recording, current_recording=current_recording, dt=dt, **_param['kwargs'])
+            print ('applying', _param, to_command_line(*_param['args'], all_section_recording, all_synapse_recording, all_current_recording, **_param['kwargs']))
+            cc.apply(simstub, './x86_64/special thalamicsim.py ' + to_command_line(*_param['args'], all_section_recording, all_synapse_recording, all_current_recording, **_param['kwargs']), _param['args'][4])
+                     
 
 
         # check for results and save

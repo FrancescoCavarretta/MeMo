@@ -18,7 +18,7 @@ for lesioned_flag in [ True, False ]:
             if lesioned_flag:
                 key += '-6ohda'
                 
-            params.append({'cellid':cellid, 'seed':seed, 'lesioned_flag':lesioned_flag, 'tstop':15000, 'key':key})
+            params.append({'cellid':cellid, 'seed':seed, 'lesioned_flag':lesioned_flag, 'tstop':100, 'key':key})
                                         
 print (len(params))
 np.save('test.npy', params, allow_pickle=True)

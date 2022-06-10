@@ -75,13 +75,13 @@ for p in [ 0, 0.5, 1, 1.5, 2 ]:
 print (len(params))
 
 for p in [ 0.5, 1, 1.5, 2 ]:
-    _g_mod = p * NmdaAmpaRatio_mod
-    add_param('NmdaAmpaRatio_mod', _g_mod)
+    _ratio_mod = p * NmdaAmpaRatio_mod
+    add_param('NmdaAmpaRatio_mod', _ratio_mod)
     
 
 for p in [ 0.5, 1, 1.5, 2 ]:
-    _g_drv = p * NmdaAmpaRatio_drv
-    add_param('NmdaAmpaRatio_drv', _g_drv)
+    _ratio_drv = p * NmdaAmpaRatio_drv
+    add_param('NmdaAmpaRatio_drv', _ratio_drv)
     
                                         
 print (len(params))
