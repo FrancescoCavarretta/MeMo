@@ -400,8 +400,6 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
   base.set(celsius=32, ena=76.4, ek=-104.9)
 
   # check point
-  # retigabine effets
-  h('forall if(ismembrane("iM")) m_steadyState_midpoint_iM = -46.7')
 
   #h.cvode_active(1)
   h.cvode.cache_efficient(1)

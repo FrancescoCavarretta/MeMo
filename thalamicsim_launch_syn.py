@@ -254,7 +254,7 @@ if __name__ == '__main__':
             _param = params.pop()
             
             print ('applying', _param, to_command_line(*_param['args'], all_section_recording, all_synapse_recording, all_current_recording, **_param['kwargs']))
-            cc.apply(simstub, './x86_64/special thalamicsim.py ' + to_command_line(*_param['args'], all_section_recording, all_synapse_recording, all_current_recording, **_param['kwargs']), _param['args'][4])
+            cc.apply(simstub, './x86_64/special thalamicsim_retigabine.py ' + to_command_line(*_param['args'], all_section_recording, all_synapse_recording, all_current_recording, **_param['kwargs']), _param['args'][4])
                      
 
 
