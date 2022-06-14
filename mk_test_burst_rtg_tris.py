@@ -14,12 +14,12 @@ for n_bg in [17]:
             
             cellids = [2, 4, 6, 12, 13] if lesioned_flag else [1, 4, 5, 6, 7, 9, 10, 11, 13, 14, 15, 20, 25]
             
-            for rtgshift in ([ 0, 10, 20, 30 ] if lesioned_flag else [0]):
-                for g_mod in ([0.00125, 0.0005] if lesioned_flag else [0.00125]):            
+            for rtgshift in ([ 30 ] if lesioned_flag else [0]):
+                for g_mod in [0.00125]: #([0.00125, 0.0005] if lesioned_flag else [0.00125]):            
                     for cellid in cellids:
                         for burst_Regularity_bg in [1000.0]:
-                            for burst_BurstMeanRate_bg in [1.5, 3.0]:
-                                    for MeanRate_drv in [30.0, 60.0]:
+                            for burst_BurstMeanRate_bg in [1.5]: #[1.5, 3.0]:
+                                    for MeanRate_drv in [60.0]: ##[30.0, 60.0]:
                                         for BurstFactor in [1.0]:
                                             b = {
                                                 'burst_Tdur_bg':150.0, 'burst_Tpeak_bg':100.0, 'burst_MaxRate_bg':150.0 * BurstFactor, 'burst_MinRate_bg':100.0 * BurstFactor,

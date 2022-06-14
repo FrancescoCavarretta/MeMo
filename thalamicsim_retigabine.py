@@ -412,8 +412,10 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
       
   # retigabine effets
   h('forall if(ismembrane("iM")) m_steadyState_midpoint_iM = (-36.7 - %f)' % msh)
+  h('forall if(ismembrane("TC_HH")) for(x) { gna_max_TC_HH(x) = gna_max_TC_HH(x) * 0.8 }')
+  h('forall if(ismembrane("TC_HH")) for(x) { gnap_max_TC_HH(x) = gnap_max_TC_HH(x) * 0.8 }')
 
-  #h.cvode_active(1)
+   #h.cvode_active(1)
   h.cvode.cache_efficient(1)
   h.cvode_active(0)
   
