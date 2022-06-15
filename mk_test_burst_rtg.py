@@ -23,7 +23,7 @@ for n_bg in [17]:
                                         for BurstFactor in [1.0]:
                                             b = {
                                                 'burst_Tdur_bg':150.0, 'burst_Tpeak_bg':100.0, 'burst_MaxRate_bg':150.0 * BurstFactor, 'burst_MinRate_bg':100.0 * BurstFactor,
-                                                'burst_BurstMeanRate_bg':burst_BurstMeanRate_bg, 'burst_MinInterPeriod_bg':200.0, 'burst_Regularity_bg':burst_Regularity_bg }
+                                                'burst_BurstMeanRate_bg':burst_BurstMeanRate_bg, 'burst_MinInterPeriod_bg':200.0, 'burst_Regularity_bg':burst_Regularity_bg, 'burst_tinit_bg':6000.0, 'burst_tstop_bg':16000.0 }
                                              
                                             key = 'output-%d' % len(params)
 
@@ -36,7 +36,7 @@ for n_bg in [17]:
                                             #if lesioned_flag:
                                             #    key += '-6ohda'
                                                 
-                                            params.append({'cellid':cellid, 'seed':seed, 'n_bg':n_bg, 'g_mod':g_mod, 'n_rtn':n_rtn, 'lesioned_flag':lesioned_flag, 'tstop':15000, 'key':key, 'rtgshift':rtgshift})
+                                            params.append({'cellid':cellid, 'seed':seed, 'n_bg':n_bg, 'g_mod':g_mod, 'n_rtn':n_rtn, 'lesioned_flag':lesioned_flag, 'tstop':16000, 'key':key, 'rtgshift':rtgshift})
                                             params[-1].update({'MeanRate_drv':MeanRate_drv})
                                             params[-1].update(b)
 

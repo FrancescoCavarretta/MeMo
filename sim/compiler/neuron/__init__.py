@@ -154,7 +154,7 @@ class SpikeTrain:
     def burst(self, inter_distribution, intra_distribution, \
               time, rate, \
               inter_time, inter_rate, min_inter_period, \
-              refractory_period, tstop): #, tweak=True):
+              refractory_period, tstop, tinit): #, tweak=True):
         
         import numpy as np
         
@@ -164,9 +164,12 @@ class SpikeTrain:
         
         #tspk = np.array([])
         #print (inter_distribution.theta)
-        for t_burst_init in self.abbasi(inter_distribution, inter_time, inter_rate, min_inter_period, tstop):
+        # time init of each burst
+        t_burst_init = self.abbasi(inter_distribution, inter_time, inter_rate, min_inter_period, tstop) + tinit
+        
+        for tbi in t_burst_init:
             _tspk = self.abbasi(intra_distribution, time, rate, refractory_period, time[-1])
-            _tspk = _tspk - _tspk[0] + t_burst_init
+            _tspk = _tspk - _tspk[0] + tbi
             bursts.append(_tspk)
             
         return bursts #if tweak else tspk
