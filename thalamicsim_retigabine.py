@@ -266,10 +266,10 @@ def mk_vm_microcircuit(cellid,
   def mk_abbasi_spike_train(param):    
     if param['template'] is not None:
       # read and attach firing rate template, if any
-      time, rate = np.load(param['template'], allow_pickle=True).tolist()
+      template = np.load(param['template'], allow_pickle=True).tolist()
       
       # return the spike train
-      return stn.SpikeTrain("abbasi", regularity=param['Regularity'], mean_rate=param["MeanRate"], time=time, rate=rate, tstop=tstop, refractory_period=3.0, time_unit="ms")
+      return stn.SpikeTrain("abbasi", regularity=param['Regularity'], mean_rate=param["MeanRate"], time=template['time'], rate=template['rate'], tstop=tstop, refractory_period=3.0, time_unit="ms")
 
     return stn.SpikeTrain("abbasi", regularity=param['Regularity'], mean_rate=param["MeanRate"], tstop=tstop, refractory_period=3.0, time_unit="ms")
 
@@ -473,7 +473,7 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
     t = tnext
 
   # clear all the objects
-  compiler.clear(retsim)
+  #compiler.clear(retsim)
 
   pc.done()
 
@@ -487,7 +487,7 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
 def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recording=False, all_synapse_recording=False, current_recording=[], rec_invl=100.0, varname=["_ref_v"], dt=0.1, **kwargs):
 
   params = {
-          'bg':{"Regularity":1.0, "MeanRate":60.0, "n":17,  "g":0.0010, 'burst':None, 'template':None },
+          'bg':{"Regularity":1.0, "MeanRate":50.0, "n":17,  "g":0.0010, 'burst':None, 'template':None },
           'rtn':{"Regularity":1.0, "MeanRate":10.0, "n":7,   "g":0.0006, 'burst':None, 'template':None},
           'drv':{"Regularity":1.0, "MeanRate":30.0, "n":17,  "g":0.0021, 'NmdaAmpaRatio':0.6, 'template':None },
           'mod':{"Regularity":1.0, "MeanRate":15.0, "n":346, "g":0.00125, 'NmdaAmpaRatio':1.91, 'template':None}
@@ -590,8 +590,10 @@ if __name__ == '__main__':
   # recording ion channel states
   if '--all_current_recording' in sys.argv:
     current_recording = []
-    for suffix in ["BK", "iM", "TC_iT_Des98", "TC_iL", "TC_ih_Bud97", "TC_iD", "TC_iA", "SK_E2", "nat_TC_HH", "nap_TC_HH", "k_TC_HH" ]:
-      for prefix in ["_ref_i_output"]:
+##    for suffix in ["BK", "iM", "TC_iT_Des98", "TC_iL", "TC_ih_Bud97", "TC_iD", "TC_iA", "SK_E2", "nat_TC_HH", "nap_TC_HH", "k_TC_HH" ]:
+##      for prefix in ["_ref_i_output", "_ref_output"]:
+    for suffix in ["TC_iT_Des98" ]:
+      for prefix in ["_ref_i_output", "_ref_output", "_ref_m", "_ref_h"]:
         current_recording.append(prefix + "_" + suffix)
     print (current_recording)
   else:
