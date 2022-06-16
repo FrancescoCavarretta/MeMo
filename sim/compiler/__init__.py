@@ -148,3 +148,13 @@ def compile(sim, base_mech=None):
 
 def register_object(base, obj):
     setattr(base, obj.__name__, obj)
+
+
+
+def clear(r):
+
+    for so in r['links'].values():
+        del simobj['real_simobj']
+        
+    for so in r['models'].values():
+        del simobj['real_simobj']        
