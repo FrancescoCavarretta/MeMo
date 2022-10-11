@@ -64,7 +64,7 @@ NEURON {
 
         :RANGE q10_ampa, temp0_ampa, q10_nmda, temp0_nmda, tadj_ampa, tadj_nmda, ampatau_in
         
-        RANGE gnmda, gampa, i, inmda, iampa, g
+        RANGE gnmda, gampa, i, inmda, iampa, g, mg
 }
 
 UNITS {
@@ -148,11 +148,14 @@ INITIAL {
         :tadj_nmda=q10_nmda^((celsius-temp0_nmda)/10)
         
         ampatau_in=ampatau  :/tadj_ampa
+
+        mg=0
 }
 
 BREAKPOINT {
 	SOLVE release METHOD cnexp
-        Rnmda = mgblock(v)*(Ron + Roff) / Rnmda_max 
+        mg=mgblock(v)
+        Rnmda = mg*(Ron + Roff) / Rnmda_max 
 	gnmda = Rnmda*gnmda_max 
         
 	inmda = gnmda * (v - e)

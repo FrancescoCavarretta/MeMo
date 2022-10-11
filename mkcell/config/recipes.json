@@ -1,156 +1,30 @@
 {
-    "lesioned_BK_short_AP": {
-        "morph_path": "morphologies/",                           
+    "control": {
+        "morph_path": "morphologies/",  			 
         "morphology": "AA0136.swc",
         "params": "config/params/TC.json",
-        "protocol": "config/protocols/6ohda_protocol.json",
-        "features": "config/features/6ohda_short_AP_features.json"
+        "protocol": "config/protocols/control_protocols.json",
+        "features": "config/features/control_features.json"
     },
-    "control_BK_short_AP": {
-        "morph_path": "morphologies/",                           
+    "lesioned": {
+        "morph_path": "morphologies/",  			 
         "morphology": "AA0136.swc",
         "params": "config/params/TC.json",
-        "protocol": "config/protocols/control_protocol.json",
-        "features": "config/features/control_short_AP_features.json"
+        "protocol": "config/protocols/6ohda_protocols.json",
+        "features": "config/features/6ohda_features.json"
     },
-    "lesioned_BK_short_AP_AA0809": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0809.swc",
+    "control_quality_check": {
+        "morph_path": "morphologies/",  			 
+        "morphology": "AA0136.swc",
         "params": "config/params/TC.json",
-        "protocol": "config/protocols/6ohda_protocol.json",
-        "features": "config/features/6ohda_short_AP_features.json"
+        "protocol": "config/protocols/control_protocols_qc.json",
+        "features": "config/features/features_qc.json"
     },
-    "control_BK_short_AP_AA0809": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0809.swc",
+    "lesioned_quality_check": {
+        "morph_path": "morphologies/",  			 
+        "morphology": "AA0136.swc",
         "params": "config/params/TC.json",
-        "protocol": "config/protocols/control_protocol.json",
-        "features": "config/features/control_short_AP_features.json"
-    }, 
-    "lesioned_BK_short_AP_AA0719": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0719.swc",
-        "params": "config/params/TC.json",
-        "protocol": "config/protocols/6ohda_protocol.json",
-        "features": "config/features/6ohda_short_AP_features.json"
-    },
-    "control_BK_short_AP_AA0719": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0719.swc",
-        "params": "config/params/TC.json",
-        "protocol": "config/protocols/control_protocol.json",
-        "features": "config/features/control_short_AP_features.json"
-    }, 
-    "lesioned_BK_short_AP_AA0718": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0718.swc",
-        "params": "config/params/TC.json",
-        "protocol": "config/protocols/6ohda_protocol.json",
-        "features": "config/features/6ohda_short_AP_features.json"
-    },
-    "control_BK_short_AP_AA0718": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0718.swc",
-        "params": "config/params/TC.json",
-        "protocol": "config/protocols/control_protocol.json",
-        "features": "config/features/control_short_AP_features.json"
-    },        
-    "lesioned_BK_short_AP_AA0675": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0675.swc",
-        "params": "config/params/TC.json",
-        "protocol": "config/protocols/6ohda_protocol.json",
-        "features": "config/features/6ohda_short_AP_features.json"
-    },
-    "control_BK_short_AP_AA0675": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0675.swc",
-        "params": "config/params/TC.json",
-        "protocol": "config/protocols/control_protocol.json",
-        "features": "config/features/control_short_AP_features.json"
-    },           
-    "lesioned_BK_short_AP_AA0612": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0612.swc",
-        "params": "config/params/TC.json",
-        "protocol": "config/protocols/6ohda_protocol.json",
-        "features": "config/features/6ohda_short_AP_features.json"
-    },
-    "control_BK_short_AP_AA0612": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0612.swc",
-        "params": "config/params/TC.json",
-        "protocol": "config/protocols/control_protocol.json",
-        "features": "config/features/control_short_AP_features.json"
-    },             
-    "lesioned_BK_short_AP_AA0451": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0451.swc",
-        "params": "config/params/TC.json",
-        "protocol": "config/protocols/6ohda_protocol.json",
-        "features": "config/features/6ohda_short_AP_features.json"
-    },
-    "control_BK_short_AP_AA0451": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0451.swc",
-        "params": "config/params/TC.json",
-        "protocol": "config/protocols/control_protocol.json",
-        "features": "config/features/control_short_AP_features.json"
-    },               
-    "lesioned_BK_short_AP_AA0448": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0448.swc",
-        "params": "config/params/TC.json",
-        "protocol": "config/protocols/6ohda_protocol.json",
-        "features": "config/features/6ohda_short_AP_features.json"
-    },
-    "control_BK_short_AP_AA0448": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0448.swc",
-        "params": "config/params/TC.json",
-        "protocol": "config/protocols/control_protocol.json",
-        "features": "config/features/control_short_AP_features.json"
-    },             
-    "lesioned_BK_short_AP_AA0226": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0226.swc",
-        "params": "config/params/TC.json",
-        "protocol": "config/protocols/6ohda_protocol.json",
-        "features": "config/features/6ohda_short_AP_features.json"
-    },
-    "control_BK_short_AP_AA0226": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0226.swc",
-        "params": "config/params/TC.json",
-        "protocol": "config/protocols/control_protocol.json",
-        "features": "config/features/control_short_AP_features.json"
-    },           
-    "lesioned_BK_short_AP_AA0176": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0176.swc",
-        "params": "config/params/TC.json",
-        "protocol": "config/protocols/6ohda_protocol.json",
-        "features": "config/features/6ohda_short_AP_features.json"
-    },
-    "control_BK_short_AP_AA0176": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0176.swc",
-        "params": "config/params/TC.json",
-        "protocol": "config/protocols/control_protocol.json",
-        "features": "config/features/control_short_AP_features.json"
-    },        
-    "lesioned_BK_short_AP_AA0137": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0137.swc",
-        "params": "config/params/TC.json",
-        "protocol": "config/protocols/6ohda_protocol.json",
-        "features": "config/features/6ohda_short_AP_features.json"
-    },
-    "control_BK_short_AP_AA0137": {
-        "morph_path": "morphologies/",                           
-        "morphology": "AA0137.swc",
-        "params": "config/params/TC.json",
-        "protocol": "config/protocols/control_protocol.json",
-        "features": "config/features/control_short_AP_features.json"
+        "protocol": "config/protocols/6ohda_protocols_qc.json",
+        "features": "config/features/features_qc.json"
     }
 }

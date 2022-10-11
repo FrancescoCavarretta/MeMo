@@ -44,6 +44,9 @@ class SpikeTrain(Model):
             if "tstop" not in kwargs:
                 kwargs["tstop"] = kwargs["time"][-1]
                 
+        elif name == "modulation":
+            pass
+
         elif name == "burst":
             if "time" not in kwargs and "rate" not in kwargs:
                 import numpy
@@ -56,14 +59,14 @@ class SpikeTrain(Model):
                     kwargs['dt'] = 0.01
                 #kwargs["time"] = numpy.linspace(0.0, kwargs["Tdur"], num=200)
                 #kwargs["rate"] = numpy.full(kwargs["time"].shape[0], kwargs["max_rate"], dtype=float)   
-                 
-                kwargs["time"], kwargs["rate"] = burst.mk_burst_template(kwargs["Tpeak"], 
-                                                         kwargs["Tdur"], 
-                                                         kwargs["max_rate"], 
-                                                         kwargs["fast_rise"], 
-                                                         kwargs["fast_decay"],
-                                                         min_rate=kwargs["min_rate"],
-                                                         dt=(kwargs['refractory_period'] / 2.0))
+                if kwargs['Tdur'] > 0:
+                    kwargs["time"], kwargs["rate"] = burst.mk_burst_template(kwargs["Tpeak"], 
+                                                             kwargs["Tdur"], 
+                                                             kwargs["max_rate"], 
+                                                             kwargs["fast_rise"], 
+                                                             kwargs["fast_decay"],
+                                                             min_rate=kwargs["min_rate"],
+                                                             dt=(kwargs['refractory_period'] / 2.0))
                 
             if "inter_time" not in kwargs and "inter_rate" not in kwargs:
                 import numpy
@@ -90,7 +93,7 @@ class SpikeTrain(Model):
             
             self.__linkattr__("mean_rate", "mean", submodel="distribution")
         elif self.name == "regular":
-            pass
+            self.distribution = Distribution("gamma")
         elif self.name == "burst":
             # if we generate a burst,
             # one distribution models the first-spike time of each burst
@@ -103,7 +106,8 @@ class SpikeTrain(Model):
             self.intra_distribution = Distribution("gamma")
             self.__linkattr__("intra_burst_k", "k", submodel="intra_distribution")
             self.__linkattr__("intra_burst_theta", "theta", submodel="intra_distribution")
-            
+        elif self.name == "modulation":
+            self.phase_distribution = Distribution("uniform", a=-0.5 / (1 + self.regularity), b=0.5 / (1 + self.regularity))
         else:
             raise NameError(f"Unknown type of Spike Train {self.name}")        
         

@@ -150,27 +150,49 @@ class SpikeTrain:
         SpikeTimes /= conversion_factor
         
         return SpikeTimes   
-    
+
+
+    def modulation(self, phase_distribution, phase, rate, amplitude, tstop, tinit):
+        import numpy as np
+        conversion_factor = SpikeTrain.time_conversion[self.time_unit]
+        
+        phase_rnd = phase_distribution() * 2 * np.pi
+
+        time = np.linspace(tinit, tstop, int( rate * 100 * (tstop - tinit) * conversion_factor ) )
+        y = np.sin(2 * np.pi * rate * (time - tinit) * conversion_factor + phase + phase_rnd) 
+        #y = np.power(y, narrowness)
+        #y = y * 2 - 1
+        #S = (y[1:] - y[:-1]) * (time[1] - time[0]) * conversion_factor
+        y = y * amplitude + 1
+        #import matplotlib.pyplot as plt
+        #plt.plot(time, y)
+        #plt.show()
+        return { 'time':time, 'y':y}
+        
+
+
+        
     def burst(self, inter_distribution, intra_distribution, \
               time, rate, \
               inter_time, inter_rate, min_inter_period, \
               refractory_period, tstop, tinit): #, tweak=True):
         
         import numpy as np
+
         
        # t_burst = self.abbasi(inter_distribution, inter_time, inter_rate, min_inter_period, tstop)
         
         bursts = []
-        
-        #tspk = np.array([])
-        #print (inter_distribution.theta)
-        # time init of each burst
-        t_burst_init = self.abbasi(inter_distribution, inter_time, inter_rate, min_inter_period, tstop) + tinit
-        
-        for tbi in t_burst_init:
-            _tspk = self.abbasi(intra_distribution, time, rate, refractory_period, time[-1])
-            _tspk = _tspk - _tspk[0] + tbi
-            bursts.append(_tspk)
+        if self.Tdur > 0:
+          #tspk = np.array([])
+          #print (inter_distribution.theta)
+          # time init of each burst
+          t_burst_init = self.abbasi(inter_distribution, inter_time, inter_rate, min_inter_period, tstop) + tinit
+          
+          for tbi in t_burst_init:
+              _tspk = self.abbasi(intra_distribution, time, rate, refractory_period, time[-1])
+              _tspk = _tspk + tbi
+              bursts.append(_tspk)
             
         return bursts #if tweak else tspk
             
@@ -189,29 +211,70 @@ class SpikeTrain:
         for x in self.generation_function.__code__.co_varnames[1:self.generation_function.__code__.co_argcount]:
             setattr(self, x, None)
 
+
+    def combine_with_modulation(self):
+        import numpy as np
+
+        mtime, my = self.modulation_model.product['time'], self.modulation_model.product['y']   
+        mtime = mtime * self.modulation_model.time_conversion[self.modulation_model.time_unit]
+        
+        time, rate = self.time, self.rate
+        time = time * self.time_conversion[self.time_unit]
+
+        tstop = self.tstop * self.time_conversion[self.time_unit]
+        
+        dt = min([mtime[1] - mtime[0], time[1] - time[0]])
+        
+        tp = np.arange(0.0, tstop, dt)
+        myp = np.interp(tp, mtime, my)
+        
+        try:
+            myp[tp < mtime[0]] = 1.0
+        except:
+            pass
+        try:
+            myp[tp > mtime[-1]] = 1.0
+        except:
+            pass
+
+        
+        ratep = np.interp(tp, time, rate)
+        combined_ratep = ratep * myp
+
+        tp = tp / self.time_conversion[self.time_unit]
+        #import matplotlib.pyplot as plt
+        #plt.eventplot(self.product, lineoffset=2)
+        
+        self.product = self.abbasi(self.distribution, tp, combined_ratep, self.refractory_period, self.tstop)
+
+        #plt.eventplot(self.product, lineoffset=1)
+        #plt.show()
+
         
     def combine_with_bursts(self):
         import numpy as np
         
         for b in self.burst_model.product:
-            i = np.argmin(np.abs(b[0] - self.product))
-            b = b + self.product[i] - b[0]
+            idx_init = np.where(self.product <= (b[0] - self.refractory_period))[0]
+            idx_end  = np.where(self.product >= (b[-1] + self.refractory_period))[0]
             
-            if self.product[-1] > b[-1]:
-                j = np.where(self.product > b[-1])[0][0]
-                if self.product[j] - b[-1] < self.refractory_period:
-                    j += 1
-                self.product = np.concatenate((self.product[:i], b, self.product[j:]))
-            else:
-                self.product = np.concatenate((self.product[:i], b))
-        self.product = self.product[self.product < self.tstop]
+            if idx_init.size > 0 and idx_end.size > 0:
+                self.product = np.concatenate((self.product[:(idx_init[-1]+1)], b, self.product[idx_end[0]:]))
+            elif idx_init.size > 0 and idx_end.size == 0:
+                self.product = np.concatenate((self.product[:(idx_init[-1]+1)], b))
+            elif idx_init.size == 0 and idx_end.size > 0:
+                self.product = np.concatenate((b, self.product[idx_end[0]:]))
                 
+        self.product = self.product[self.product < self.tstop]           
             
             
     def make(self):
         if self.product is None:
             if hasattr(self, "distribution") and self.distribution:
                 self.distribution.make()
+                
+            if hasattr(self, "phase_distribution") and self.phase_distribution:
+                self.phase_distribution.make()
                 
             if hasattr(self, "intra_distribution") and self.intra_distribution:
                 self.intra_distribution.make()
@@ -220,13 +283,20 @@ class SpikeTrain:
                 self.inter_distribution.make()
                 
             if hasattr(self, "burst_model") and self.burst_model:
-                self.burst_model.make()                
+                print ('Here')
+                self.burst_model.make()
+                
+            if hasattr(self, "modulation_model") and self.modulation_model:
+                self.modulation_model.make()
                 
             self.product = self.generation_function(*[getattr(self, x) for x in self.generation_function.__code__.co_varnames[1:self.generation_function.__code__.co_argcount]])
-            
+
+            if hasattr(self, "modulation_model") and self.modulation_model:
+                self.combine_with_modulation()
+                
             if hasattr(self, "burst_model") and self.burst_model:
                 self.combine_with_bursts()
-        
+                
         return self.product
         
     
@@ -493,7 +563,7 @@ class Population:
     
     def __del__(self):
         for p in self.product:
-            del p
+          del p
             
         del self.product
         self.product = None
@@ -691,6 +761,27 @@ class Cell:
 
 def set(**kwargs):
     from neuron import h
+    
+    if 'ion_channel_blocker' in kwargs:
+        for blocker in kwargs['ion_channel_blocker']:
+            if blocker == 'TTX':
+                attrs = [ 'gna_max_TC_HH', 'gnap_max_TC_HH']
+            elif blocker == 'Cs':
+                attrs = [ 'gk_max_TC_HH', 'gk_max_TC_iD', 'gk_max_TC_iA',
+                          'gSK_E2bar_SK_E2', 'gbar_BK', 'gmax_iM' ]
+            elif blocker == 'AP5':
+                attrs = [ 'gk_max_TC_iD', 'gk_max_TC_iA' ]
+            else:
+                print (blocker, 'channel blocker is unknown')
+            for s in forall():
+                for k in attrs:
+                    if hasattr(s, k):
+                        setattr(s, k, 1e-20)
+                        #print (s, k)
+        
+                        
+        del kwargs['ion_channel_blocker']
+        
     for k, v in kwargs.items():
         try:
             setattr(h, k, v)

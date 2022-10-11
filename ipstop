@@ -1,4 +1,0 @@
-ipcluster stop
-killall ipcontroller
-killall ipengine
-rm ~/.ipython*

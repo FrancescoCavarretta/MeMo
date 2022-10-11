@@ -6,13 +6,15 @@ NEURON {
 	SUFFIX TC_HH
 	USEION na READ ena WRITE ina
 	USEION k READ ek WRITE ik
-	RANGE gna_max, gk_max, gnap_max, vtraubna, vtraubk
-	RANGE m_inf, h_inf, n_inf, mp_inf, hp_inf, hsp_inf
-	RANGE tau_m, tau_h, tau_n, tau_mp, tau_hp, tau_hsp
+	RANGE gna_max, gk_max, gnap_max
+	RANGE m_inf, h_inf, n_inf, mp_inf, hp_inf
+	RANGE tau_m, tau_h, tau_n, tau_mp, tau_hp
 	RANGE ina, ik
 
         : ------ analysis ------
         RANGE output_nat, output_nap, output_k, i_output_nat, i_output_nap, i_output_na, i_output_k
+        GLOBAL m_factor, n_factor, h_factor
+        GLOBAL vtraubna, vtraubk
         
         GLOBAL shift
 }
@@ -35,10 +37,13 @@ PARAMETER {
 	vtraubna = -55.5   : Average of original value and Amarillo et al., J Neurophysiol 112:393-410, 2014
         vtraubk  = -55.5   : Average of original value and Amarillo et al., J Neurophysiol 112:393-410, 2014
         shift    = 0
+        m_factor = 1
+        n_factor = 1
+        h_factor = 1
 }
 
 STATE {
-	m h n mp hp hsp
+	m h n mp hp
 }
 
 ASSIGNED {
@@ -50,14 +55,12 @@ ASSIGNED {
 	h_inf
 	mp_inf
 	hp_inf
-	hsp_inf
 	n_inf
 	tau_m
 	tau_h
 	tau_n
 	tau_mp
 	tau_hp
-	tau_hsp
 	tcorr
 
 
@@ -77,15 +80,15 @@ BREAKPOINT {
 	SOLVE states METHOD cnexp
 
         output_nat = gna_max  * m*m*m*h
-        output_nap = gnap_max * mp*mp*mp*hp : mp*mp*mp*(0.04*hp+0.96*hsp)
+        output_nap = gnap_max * mp*mp*mp*hp 
         output_k   = gk_max   * n*n*n*n 
         i_output_nat  = output_nat*(v - ena)
         i_output_nap  = output_nap*(v - ena)
         i_output_na   = i_output_nat + i_output_nap
         i_output_k    = output_k * (v - ek)
         
-	ina   =  i_output_na :gna_max * m*m*m*h * (v - ena) + gnap_max * (mp*mp*mp*(0.04*hp + 0.96*hsp)) * (v - ena)
-	ik    = i_output_k   :gk_max  * n*n*n*n * (v - ek)
+	ina   =  i_output_na 
+	ik    = i_output_k   
 }
 
 
@@ -95,7 +98,6 @@ DERIVATIVE states {   : exact Hodgkin-Huxley equations
 	h' = (h_inf - h) / tau_h
 	mp' = (mp_inf - mp) / tau_mp
 	hp' = (hp_inf - hp) / tau_hp
-	hsp' = (hsp_inf - hsp) / tau_hsp
 	n' = (n_inf - n) / tau_n
 }
 
@@ -109,18 +111,17 @@ INITIAL {
 	h = h_inf
 	mp = mp_inf
 	hp = hp_inf
-	hsp = hsp_inf
 	n = n_inf
 
         output_nat = gna_max  * m*m*m*h
-        output_nap = gnap_max * mp*mp*mp*hp    : mp*mp*mp*(0.04*hp+0.96*hsp)
+        output_nap = gnap_max * mp*mp*mp*hp 
         output_k   = gk_max   * n*n*n*n 
         i_output_nat  = output_nat *(v - ena)
         i_output_nap  = output_nap *(v - ena)
         i_output_na   = i_output_nat + i_output_nap
         i_output_k    = output_k * (v - ek)
         
-	ina   =  i_output_na  :gna_max * m*m*m*h * (v - ena) + gnap_max * (mp*mp*mp*hp) * (v - ena) : * (mp*mp*mp*(0.04*hp + 0.96*hsp)) * (v - ena)
+	ina   =  i_output_na  :gna_max * m*m*m*h * (v - ena) + gnap_max * (mp*mp*mp*hp) * (v - ena) 
 	ik    =  i_output_k   :gk_max  * n*n*n*n * (v - ek)
 }
 
@@ -136,18 +137,18 @@ PROCEDURE evaluate_fct(v(mV)) { LOCAL a,b,v2, v3, v4
 
 	a = 0.32 * (13-v2) / ( exp((13-v2)/4) - 1)
 	b = 0.28 * (v2-40) / ( exp((v2-40)/5) - 1)
-	tau_m = 1 / (a + b) / tcorr
+	tau_m = 1 / (a + b) / tcorr * m_factor
 	m_inf = a / (a + b)
 
 	a = 0.128 * exp((17-v2)/18)
 	b = 4 / ( 1 + exp((40-v2)/5) )
-	tau_h = 1 / (a + b) / tcorr
+	tau_h = 1 / (a + b) / tcorr * h_factor
 	h_inf = a / (a + b)
 
 
 	a = 0.032 * (15-v3) / ( exp((15-v3)/5) - 1)
 	b = 0.5 * exp((10-v3)/40)
-	tau_n = 1 / (a + b) / tcorr
+	tau_n = 1 / (a + b) / tcorr * n_factor
 	n_inf = a / (a + b)
 
 
@@ -157,8 +158,8 @@ PROCEDURE evaluate_fct(v(mV)) { LOCAL a,b,v2, v3, v4
           v = v+0.0001
         }
 
-	a = 0.32 * (13-v4) / ( exp((13-v4)/(1.5*4)) - 1) :*6
-	b = 0.28 * (v4-40) / ( exp((v4-40)/(1.5*5)) - 1) :*6
+	a = 0.32 * (13-v4) / ( exp((13-v4)/(1.5*4)) - 1) 
+	b = 0.28 * (v4-40) / ( exp((v4-40)/(1.5*5)) - 1) 
 	tau_mp = 1 / (a + b) / tcorr
 	mp_inf = a / (a + b)
 
@@ -168,11 +169,7 @@ PROCEDURE evaluate_fct(v(mV)) { LOCAL a,b,v2, v3, v4
 	tau_hp = 1 / (a + b) / tcorr
         hp_inf = a / (a + b)
 
-                                
-        a = 0.128 * exp((17-v4)/18) :/15
-        b = 4 / ( 1 + exp((40-v4)/5) ) :/15
-	tau_hsp = 1 / (a + b) / tcorr
-        hsp_inf = a / (a + b)
+                              
                                 
 }
 

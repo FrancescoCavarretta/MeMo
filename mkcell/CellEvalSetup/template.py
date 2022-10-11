@@ -1,5 +1,5 @@
 """
-Copyright (c) 2016, EPFL/Blue Brain Project
+Copyright (c) 2016-2020, EPFL/Blue Brain Project
 
  This file is part of BluePyOpt <https://github.com/BlueBrain/BluePyOpt>
 
@@ -31,55 +31,46 @@ import bluepyopt.ephys as ephys
 import logging
 logger = logging.getLogger(__name__)
 
-from . import CustomChannelDistribution
+
 
 import random
-
 
 def multi_locations(sectionlist):
     """Define mechanisms"""
 
     if sectionlist == "alldend":
-        seclist_locs = {
-            "basal":ephys.locations.NrnSeclistLocation("basal", seclist_name="basal")
-        }
+        seclist_locs = [
+            ephys.locations.NrnSeclistLocation("basal", seclist_name="basal")
+        ]
     elif sectionlist == "somadend":
-        seclist_locs = {
-            "basal":ephys.locations.NrnSeclistLocation(
+        seclist_locs = [
+            ephys.locations.NrnSeclistLocation(
                 "basal", seclist_name="basal"),
-            "somatic":ephys.locations.NrnSeclistLocation(
+            ephys.locations.NrnSeclistLocation(
                 "somatic", seclist_name="somatic")
-        }
+        ]
     elif sectionlist == "somaxon":
-        seclist_locs = {
-            "axonal":ephys.locations.NrnSeclistLocation(
+        seclist_locs = [
+            ephys.locations.NrnSeclistLocation(
                 "axonal", seclist_name="axonal"),
-            "somatic":ephys.locations.NrnSeclistLocation(
+            ephys.locations.NrnSeclistLocation(
                 "somatic", seclist_name="somatic")
-        }
+        ]
     elif sectionlist == "allact":
-        seclist_locs = {
-            "axonal":ephys.locations.NrnSeclistLocation(
-                "axonal", seclist_name="axonal"),
-            "somatic":ephys.locations.NrnSeclistLocation(
+        seclist_locs = [
+            ephys.locations.NrnSeclistLocation(
+                "basal", seclist_name="basal"),
+            ephys.locations.NrnSeclistLocation(
                 "somatic", seclist_name="somatic"),
-            "basal":ephys.locations.NrnSeclistLocation(
-                "basal", seclist_name="basal")
-        }
-    elif sectionlist == "axon":
-        seclist_locs = {
-            "axonal":ephys.locations.NrnSeclistLocation(
+            ephys.locations.NrnSeclistLocation(
                 "axonal", seclist_name="axonal")
-        }
+        ]
     else:
-        seclist_locs = {
-            sectionlist:ephys.locations.NrnSeclistLocation(
+        seclist_locs = [ephys.locations.NrnSeclistLocation(
             sectionlist,
-            seclist_name=sectionlist)
-        }
+            seclist_name=sectionlist)]
 
     return seclist_locs
-
 
 
 def define_mechanisms(params_filename):
@@ -93,7 +84,7 @@ def define_mechanisms(params_filename):
     mechanisms_list = []
     for sectionlist, channels in mech_definitions.items():
 
-        seclist_locs = list(multi_locations(sectionlist).values())
+        seclist_locs = multi_locations(sectionlist)
 
         for channel in channels["mech"]:
             mechanisms_list.append(ephys.mechanisms.NrnMODMechanism(
@@ -108,7 +99,8 @@ def define_mechanisms(params_filename):
 
 def define_parameters(params_filename):
     """Define parameters"""
-
+    from . import CustomChannelDistribution
+    
     parameters = []
 
     with open(os.path.join(os.path.dirname(__file__), '..', params_filename)) as params_file:
@@ -135,8 +127,6 @@ def define_parameters(params_filename):
                 scaler = CustomChannelDistribution.NrnSegmentCaTDistanceScaler()
             elif distribution.startswith("FromAxonCaL"):
                 scaler = CustomChannelDistribution.NrnSegmentCaLDistanceScaler()
-            elif distribution.startswith("FromAxonECl"):                
-                scaler = CustomChannelDistribution.NrnSegmentEClDistanceScaler(float(distribution.split("_")[-1]))
             else:
                 scaler = CustomChannelDistribution.NrnSegmentAxonDistanceScaler(
                     definition["proximal"],
@@ -147,6 +137,7 @@ def define_parameters(params_filename):
                 )
                 
             distributions[distribution] = scaler
+            
         else:
             for seclist, multiplier in definition.items():
                 distributions[distribution].update({seclist:ephys.parameterscalers.NrnSegmentLinearScaler(multiplier=multiplier)})
@@ -187,40 +178,31 @@ def define_parameters(params_filename):
                         bounds=bounds,
                         value=value))
             else:
+                if "dist" in param_config:
+                    dist = distributions[param_config["dist"]]
+                    use_range = True
+                else:
+                    dist = distributions["uniform"]
+                    use_range = False
 
-
-
-                for _sectionlist, _seclist_locs in seclist_locs.items():
-                    
-                    if "dist" in param_config:
-                        if param_config["dist"].startswith("FromAxon"):
-                            dist = distributions[param_config["dist"]]
-                        else:
-                            dist = None
-                        use_range = True
-                    else:
-                        dist = distributions["uniform"]
-                        use_range = False
-                        
-                    if use_range:
-                        parameters.append(ephys.parameters.NrnRangeParameter(
-                            name='%s.%s' % (param_name, _sectionlist),
-                            param_name=param_name,
-                            value_scaler=dist,
-                            value=value,
-                            bounds=bounds,
-                            frozen=is_frozen,
-                            locations=[_seclist_locs]))
-                    else:
-                        parameters.append(ephys.parameters.NrnSectionParameter(
-                            name='%s.%s' % (param_name, _sectionlist),
-                            param_name=param_name,
-                            value_scaler=dist,
-                            value=value,
-                            bounds=bounds,
-                            frozen=is_frozen,
-                            locations=[_seclist_locs]))
-
+                if use_range:
+                    parameters.append(ephys.parameters.NrnRangeParameter(
+                        name='%s.%s' % (param_name, sectionlist),
+                        param_name=param_name,
+                        value_scaler=dist,
+                        value=value,
+                        bounds=bounds,
+                        frozen=is_frozen,
+                        locations=seclist_locs))
+                else:
+                    parameters.append(ephys.parameters.NrnSectionParameter(
+                        name='%s.%s' % (param_name, sectionlist),
+                        param_name=param_name,
+                        value_scaler=dist,
+                        value=value,
+                        bounds=bounds,
+                        frozen=is_frozen,
+                        locations=seclist_locs))
 
     return parameters
 
@@ -233,20 +215,18 @@ def define_morphology(morphology_filename, do_set_nseg=1e9):
     # Use default moprhology class from BluePyOpt
     return ephys.morphologies.NrnFileMorphology(
         os.path.join(morphology_filename),
-        do_replace_axon=False,
+        do_replace_axon=True,
         do_set_nseg=do_set_nseg)
 
-    
-        
 
 def create(recipe, etype, altmorph=None):
     """Create cell template"""
 
     if altmorph is None:
-        morph_path = os.path.join(os.path.join(os.path.dirname(__file__), "..", recipe[etype]['morph_path'], recipe[etype]['morphology']))
+        morph_path = os.path.join(os.path.dirname(__file__), '..', os.path.join(recipe[etype]['morph_path'], recipe[etype]['morphology']))
     else:
         morph_path = altmorph
-        
+
     cell = ephys.models.CellModel(
         etype,
         morph=define_morphology(morph_path, do_set_nseg=40.),

@@ -1,5 +1,5 @@
 class Recorder:
-  def __init__(self, ref, seg=None, dt=0.1):
+  def __init__(self, ref, seg=None, dt=0.25):
     from neuron import h, nrn
     import numpy as np
       
@@ -8,15 +8,13 @@ class Recorder:
     
     self._data = None
     
-    is_seg = seg and isinstance(seg, nrn.Segment)
-    
-    if is_seg:
-        seg.sec.push()
+    if seg:
+        self.t.record(h._ref_t, sec=seg.sec)
+        self.y.record(ref, sec=seg.sec)
+    else:
+        self.t.record(h._ref_t)
+        self.y.record(ref)
         
-    h.CVode().record(ref, self.y, self.t)
-    
-    if is_seg:
-        h.pop_section()
         
     self.dt = dt
 
@@ -55,7 +53,7 @@ class Recorder:
     self.y.resize(0)
 
 
-  def get(self, dt=0.1):
+  def get(self, dt=0.2):
     import numpy as np
     
     try:

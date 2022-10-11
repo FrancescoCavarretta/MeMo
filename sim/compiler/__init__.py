@@ -154,7 +154,7 @@ def register_object(base, obj):
 def clear(r):
 
     for so in r['links'].values():
-        del simobj['real_simobj']
+        del so['real_simobj']
         
     for so in r['models'].values():
-        del simobj['real_simobj']        
+        del so['real_simobj']        

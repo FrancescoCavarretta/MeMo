@@ -50,9 +50,7 @@ class StepProtocolCustom(ephys.protocols.StepProtocol):
             step_stimulus=None,
             holding_stimulus=None,
             recordings=None,
-            cvode_active=None,
-            holding_voltage=None,
-            step_stimulus_amp=None):
+            cvode_active=None):
         """Constructor"""
 
         super(StepProtocolCustom, self).__init__(
@@ -61,37 +59,10 @@ class StepProtocolCustom(ephys.protocols.StepProtocol):
             holding_stimulus=holding_stimulus,
             recordings=recordings,
             cvode_active=cvode_active)
-        
-
-        self.holding_voltage = holding_voltage
-        self.step_stimulus_amp = step_stimulus_amp
 
 
-
-    def _set_step_amp(self, amp):
-        if self.step_stimulus:
-            self.step_stimulus.step_amplitude = amp
-
-
-
-    def _set_holding_amp(self, amp):
-        if self.holding_stimulus:
-            self.holding_stimulus.step_amplitude = amp
-
-            
-        
     def run(self, cell_model, param_values, sim=None, isolate=None):
         """Run protocol"""
-
-
-        if self.step_stimulus and \
-           self.step_stimulus.step_amplitude is None:
-            self.step_stimulus.step_amplitude = 0
-
-        if self.holding_stimulus and \
-           self.holding_stimulus.step_amplitude is None:
-            self.holding_stimulus.step_amplitude = 0
-            
 
         responses = {}
 
@@ -140,7 +111,7 @@ class RampProtocol(ephys.protocols.SweepProtocol):
 
         self.ramp_stimulus = ramp_stimulus
         self.holding_stimulus = holding_stimulus
-
+        
     @property
     def step_delay(self):
         """Time stimulus starts"""

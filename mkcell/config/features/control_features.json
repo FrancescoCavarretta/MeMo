@@ -1,91 +1,88 @@
 {
     "Step200_2000ms": {
         "soma.v": [
-            { "feature": "AP_amplitude", "val": [ 71.6036987255865, 8.013573081709945 ], "n": 10.0, "weight": 0.5 },
-            { "feature": "AHP_depth", "val": [ 8.290039062706775, 5.862711634691729 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "AP_width", "val": [ 0.9900000000002251, 0.18529256146253936 ], "n": 10.0, "weight": 0.1 },
-            { "feature": "AP_count", "val": [ 19.0, 19.136933459209764 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "time_to_first_spike", "val": [ 26.67000000011941, 34.517404627560914 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "inv_first_ISI", "val": [ 40.50475713246374, 23.421133161386827 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "inv_second_ISI", "val": [ 31.71211924966021, 20.507313203355565 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "inv_last_ISI", "val": [ 23.55118595594139, 38.12861317872364 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "adaptation_index2", "val": [ 0.015885870286672082, 0.14014502728124772 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "AP_amplitude_min_max", "val": [ 13.256835933292638, 14.148515174536964 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "voltage_base", "val": [ -70.50792236328128, 2.010319752578128 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "voltage_after_stim", "val": [ -73.21497746476487, 2.3805218914591753 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "AP_count_before_stim", "val": [ 0, 0.001 ], "weight": 1.0, "n": 0 },
-            { "feature": "clustering_index", "val": [ 0.8795474910394265, 0.15652472657834374 ], "n": 10.0, "weight": 1.0 }
-        ]
-    },
-    "Step220_2000ms": {
-        "soma.v": [
-            { "feature": "AP_amplitude", "val": [ 71.60827636222307, 8.577375393263017 ], "n": 10.0, "weight": 0.5 },
-            { "feature": "AHP_depth", "val": [ 8.648588180745817, 6.226290056511601 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "AP_width", "val": [ 0.9900000000002251, 0.1911950719960433 ], "n": 10.0, "weight": 0.1 },
-            { "feature": "AP_count", "val": [ 24.7, 18.196764059090896 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "time_to_first_spike", "val": [ 18.700000000117598, 21.031035268018684 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "inv_first_ISI", "val": [ 51.342917445541524, 24.95462296649929 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "inv_second_ISI", "val": [ 41.39933373308985, 20.61197902088928 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "inv_last_ISI", "val": [ 23.7793099985977, 38.14699057203137 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "adaptation_index2", "val": [ 0.03858896116541199, 0.019941396056723654 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "AP_amplitude_min_max", "val": [ 16.993713371121988, 15.499850670502415 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "clustering_index", "val": [ 0.8252330422479677, 0.1594805085290233 ], "n": 10.0, "weight": 1.0 }
+            { "feature": "AP_amplitude", "val": [ 54.974025113800835, 6.267098971366885 ], "n": 9.0, "weight": 0.5, "t_trace_init":100, "threshold": -20 },
+            { "feature": "AHP_depth", "val": [ 6.9676195409848685, 4.199799681300903 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "AP_width", "val": [ 0.9555555555557729, 0.20069324297991717 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "AP_count", "val": [ 14.333333333333334, 12.922847983320084 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "time_to_first_spike", "val": [ 28.655555555675416, 36.05458053810041 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "inv_first_ISI", "val": [ 36.124402387130644, 20.047606742806217 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "inv_second_ISI", "val": [ 28.60074680236022, 19.096396589563593 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "inv_last_ISI", "val": [ 12.289678375709554, 14.366616293818549 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "adaptation_index2", "val": [ 0.016331659379128463, 0.1488797349302043 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "voltage_base", "val": [ -70.94988242045851, 1.533450765780804 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "voltage_after_stim", "val": [ -73.33804999388018, 2.4909575822278813 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "AP_count_before_stim", "val": [ 0.0, 0.01 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "AP_count_after_stim", "val": [ 0.0, 0.01 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "max_amp_difference", "val": [ 3.014006830905666, 2.9749962739120748 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "clustering_index", "val": [ 0.9147749900438072, 0.11662547348483701 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "fast_AHP", "val": [ 10.783849660912036, 3.6713176875322637 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 }
         ]
     },
     "Step240_2000ms": {
         "soma.v": [
-            { "feature": "AP_amplitude", "val": [ 74.12750243695254, 7.204375309649434 ], "n": 10.0, "weight": 0.5 },
-            { "feature": "AHP_depth", "val": [ 8.973136902110111, 6.742299826754567 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "AP_width", "val": [ 0.9900000000002251, 0.20789954839354963 ], "n": 10.0, "weight": 0.1 },
-            { "feature": "AP_count", "val": [ 29.5, 18.106168378023366 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "time_to_first_spike", "val": [ 13.200000000116347, 11.470445113907784 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "inv_first_ISI", "val": [ 50.61708857208507, 26.981635627486757 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "inv_second_ISI", "val": [ 51.09746131578884, 20.310534675483712 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "inv_last_ISI", "val": [ 23.963396558066407, 40.76119336225186 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "adaptation_index2", "val": [ 0.04934300142053905, 0.03849998960665839 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "AP_amplitude_min_max", "val": [ 20.17669677060007, 15.024259718020009 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "clustering_index", "val": [ 0.8058999876451691, 0.13044715427213455 ], "n": 10.0, "weight": 1.0 }
+            { "feature": "AP_amplitude", "val": [ 55.10122093724767, 7.249591995687241 ], "n": 9.0, "weight": 0.5, "t_trace_init":100, "threshold": -20 },
+            { "feature": "AHP_depth", "val": [ 7.472603817095987, 4.74149035367855 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "AP_width", "val": [ 0.9333333333335455, 0.2179449471770832 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "AP_count", "val": [ 25.11111111111111, 12.333333333333332 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "time_to_first_spike", "val": [ 14.000000000116529, 11.92864200150481 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "inv_first_ISI", "val": [ 46.15783820149675, 24.356221302556616 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "inv_second_ISI", "val": [ 48.05804537669967, 18.894121856383467 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "inv_last_ISI", "val": [ 11.831708496907241, 14.475620221056948 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "adaptation_index2", "val": [ 0.05399405967776467, 0.037770319687669904 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "voltage_base", "val": [ -70.72608991241164, 1.5132891218912254 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "voltage_after_stim", "val": [ -73.65683184384251, 2.73453406942843 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "AP_count_before_stim", "val": [ 0.0, 0.01 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "AP_count_after_stim", "val": [ 0.0, 0.01 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "max_amp_difference", "val": [ 3.621845287108559, 2.997964840763442 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "clustering_index", "val": [ 0.8312816764132553, 0.10906845860197378 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "fast_AHP", "val": [ 9.332058571302689, 3.3037298401844626 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 }
         ]
     },
-    "Step260_2000ms": {
+    "Step280_2000ms": {
         "soma.v": [
-            { "feature": "AP_amplitude", "val": [ 74.70123290582849, 7.215937294214981 ], "n": 10.0, "weight": 0.5 },
-            { "feature": "AHP_depth", "val": [ 9.193080902471028, 7.322582416166936 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "AP_width", "val": [ 0.9600000000002182, 0.21705094128137875 ], "n": 10.0, "weight": 0.1 },
-            { "feature": "AP_count", "val": [ 33.6, 18.733214708995714 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "time_to_first_spike", "val": [ 9.840000000115584, 6.691155024028059 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "inv_first_ISI", "val": [ 56.30110560634877, 26.236753034308276 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "inv_second_ISI", "val": [ 49.28457877225871, 19.80914511472708 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "inv_last_ISI", "val": [ 27.64382090246044, 38.70434672410382 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "adaptation_index2", "val": [ 0.02653380041910281, 0.01835264677684143 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "AP_amplitude_min_max", "val": [ 22.53417967935645, 16.345077648274486 ], "n": 10.0, "weight": 1.0 },
-            { "feature": "clustering_index", "val": [ 0.7893630617980115, 0.14684692017503917 ], "n": 10.0, "weight": 1.0 }
+            { "feature": "AP_amplitude", "val": [ 55.18989186186863, 7.499908745327647 ], "n": 9.0, "weight": 0.5, "t_trace_init":100, "threshold": -20 },
+            { "feature": "AHP_depth", "val": [ 7.666540067824696, 5.263379523346686 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "AP_width", "val": [ 0.9222222222224319, 0.25385910352885466 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "AP_count", "val": [ 32.55555555555556, 15.240661986205776 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "time_to_first_spike", "val": [ 7.755555555670664, 3.1277432403863057 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "inv_first_ISI", "val": [ 58.08119192743753, 25.243868404390838 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "inv_second_ISI", "val": [ 54.712616351466075, 21.03506221142844 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "inv_last_ISI", "val": [ 16.37789869133211, 13.907579628851993 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "adaptation_index2", "val": [ 0.033272712263817034, 0.019570594712399275 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "voltage_base", "val": [ -70.50034199515324, 1.8248636631007848 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "voltage_after_stim", "val": [ -73.63678379886015, 3.183691494593762 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "AP_count_before_stim", "val": [ 0.0, 0.01 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "AP_count_after_stim", "val": [ 0.0, 0.01 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "max_amp_difference", "val": [ 3.417603236039365, 2.356264472869433 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "clustering_index", "val": [ 0.7934356074863593, 0.13374981595146748 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 },
+            { "feature": "fast_AHP", "val": [ 8.404862122740624, 3.4514249521233324 ], "n": 9.0, "weight": 1.0, "t_trace_init":100, "threshold": -20 }
         ]
     },
     "SagStep-200_2000ms": {
         "soma.v": [
-            { "feature": "voltage_base", "val": [ -77.65770359039298, 4.502317381763557 ], "n": 16.0, "weight": 1.0 },
-            { "feature": "sag_ratio3", "val": [ 24.90174929816094, 16.838055742737314 ], "n": 16.0, "weight": 1.0 },
-            { "feature": "AP1_amp_after_stim", "val": [ 76.45955402473685, 10.950189314466414 ], "n": 15.0, "weight": 0.5 },
-            { "feature": "AP2_amp_after_stim", "val": [ 54.87989638386478, 6.148418453063483 ], "n": 9.0, "weight": 0.5 },
-            { "feature": "time_to_first_spike_after_stim", "val": [ 1042.7666666655364, 29.34902448282859 ], "n": 15.0, "weight": 1.0 },
-            { "feature": "AHP_depth_after_stim", "val": [ 44.68915981995948, 12.02227364139229 ], "n": 15.0, "weight": 1.0 },
-            { "feature": "AP_count_after_stim", "val": [ 2.5, 1.7511900715418263 ], "n": 16.0, "weight": 1.0 },
-            { "feature": "inv_first_ISI_after_stim", "val": [ 91.70897425935814, 103.38767953913276 ], "n": 16.0, "weight": 1.0 },
-            { "feature": "inv_second_ISI_after_stim", "val": [ 44.86468010631755, 74.65469678283576 ], "n": 16.0, "weight": 1.0 },
-            { "feature": "inv_last_ISI_after_stim", "val": [ 72.60243696737047, 81.86311660332377 ], "n": 16.0, "weight": 1.0 },
-            { "feature": "voltage_after_stim", "val": [ -75.1181325832838, 4.997334137244699 ], "n": 16.0, "weight": 1.0 },
-            { "feature": "AP_count_before_stim", "val": [ 0, 0.001 ], "weight": 1.0, "n": 0 }
-        ]
-    },
-    "Step_2000ms": {
-        "soma.v": [
-            { "feature": "input_resistance", "val": [ 237.73118972778317, 95.37395766505557 ], "n": 16.0, "weight": 1.0 }
+            { "feature": "voltage_base", "val": [ -77.91007518937487, 3.7970015449287353 ], "n": 8.0, "weight": 1.0, "t_trace_init":100, "threshold": -34.75 },
+            { "feature": "AP1_amp_rev", "val": [ 57.47216926746651, 10.390617887399186 ], "n": 8.0, "weight": 0.5, "t_trace_init":100, "threshold": -34.75 },
+            { "feature": "AP2_amp_rev", "val": [ 32.255600114862474, 10.014912790813616 ], "n": 6.0, "weight": 0.5, "t_trace_init":100, "threshold": -34.75 },
+            { "feature": "time_to_first_spike", "val": [ 2047.4874999985059, 38.22405515973526 ], "n": 8.0, "weight": 1.0, "t_trace_init":100, "threshold": -34.75 },
+            { "feature": "AP_count_before_stim", "val": [ 0.0, 0.01 ], "n": 8.0, "weight": 1.0, "t_trace_init":100, "threshold": -34.75 },
+            { "feature": "AP_count_after_stim", "val": [ 2.25, 0.4629100498862757 ], "n": 8.0, "weight": 1.0, "t_trace_init":100, "threshold": -34.75 },
+            { "feature": "inv_first_ISI", "val": [ 151.34767648568226, 107.10606861825816 ], "n": 8.0, "weight": 1.0, "t_trace_init":100, "threshold": -34.75 },
+            { "feature": "inv_second_ISI", "val": [ 27.046783625755587, 50.105293969475724 ], "n": 8.0, "weight": 1.0, "t_trace_init":100, "threshold": -34.75 },
+            { "feature": "inv_last_ISI", "val": [ 122.35157512113346, 95.37298249933274 ], "n": 8.0, "weight": 1.0, "t_trace_init":100, "threshold": -34.75 },
+            { "feature": "voltage_after_stim", "val": [ -75.3132939783255, 4.014971915986918 ], "n": 8.0, "weight": 1.0, "t_trace_init":100, "threshold": -34.75 },
+            { "feature": "sag_amplitude", "val": [ 10.955873931518436, 7.845865745257617 ], "n": 8.0, "weight": 1.0, "t_trace_init":100, "threshold": -34.75 },
+            { "feature": "voltage_deflection", "val": [ -22.749090547596477, 8.763637336056915 ], "n": 8.0, "weight": 1.0, "t_trace_init":100, "threshold": -34.75 }
         ]
     },
     "Pulse": {
         "soma.v": [
-            { "feature": "decay_time_constant_after_stim2", "val": [ 20.69, 10.27 ], "weight": 1 }
+            { "feature": "decay_time_constant_after_stim2", "val": [ 20.69, 10.27 ], "weight": 1, "t_trace_init":100 }
+        ]
+    },
+    "Step_2000ms": {
+        "soma.v": [
+            { "feature": "input_resistance", "val": [ 227.6358865661278, 56.80321113741724 ], "n": 8.0, "weight": 1.0, "t_trace_init":100 }
         ]
     }
 }

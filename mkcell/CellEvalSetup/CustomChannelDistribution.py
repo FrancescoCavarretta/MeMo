@@ -114,67 +114,6 @@ class NrnSegmentNaDistanceScaler(ParameterScaler, DictMixin):
         """String representation"""
         return ""
 
-
-class NrnSegmentEClDistanceScaler(ParameterScaler, DictMixin):
-    def __init__(self,
-                 scaler,
-                 name=None,
-                 comment=''):
-      super(NrnSegmentEClDistanceScaler, self).__init__(name, comment)
-
-      self.scaler = 1.0/scaler
-      #self.min_ecl = -80.
-      #self.max_ecl = -46.
-      self.Ce = 133.1
-      self.Ci_Phy = 7.0
-      self.Ci_Pipette = 22.
-
-
-
-    def get_depth(self, sec, sim):
-        depth = 1
-        sref = sim.neuron.h.SectionRef(sec=sec)
-        while sref.has_parent() and \
-              ("soma" not in sim.neuron.h.secname(sec=sref.parent)):
-            sref = sim.neuron.h.SectionRef(sec=sref.parent)
-            depth += 1
-        return depth
-
-
-    def get_distance(self, segment, sim):
-        d = segment.x*segment.sec.L
-
-        sref = sim.neuron.h.SectionRef(sec=segment.sec)
-        while sref.has_parent() and \
-              ("soma" not in sim.neuron.h.secname(sec=sref.parent)):
-            sref = sim.neuron.h.SectionRef(sec=sref.parent)
-            d += sref.sec.L
-            
-        return d if d > 0 else 0.0
-        
-        
-    def _nerst_eq(self, T, Ce, Ci):
-        T += 273.15
-        R = 8.31446261815324
-        F = 96485.3321233100184
-        z = -1
-        return (R*T/F)/z*log(Ce/Ci)*1000.0
-
-    def scale(self, value, segment, sim=None):
-        secname = sim.neuron.h.secname(sec=segment.sec)
-        if "soma" in secname:
-          d  = 0.0
-        else:
-          d = self.get_distance(segment, sim)
-        """Scale a value based on a segment"""
-        Ci = (self.Ci_Pipette-self.Ci_Phy)*exp(-(self.scaler*d)**2)+self.Ci_Phy
-        return self._nerst_eq(sim.neuron.h.celsius, self.Ce, Ci)
-        
-
-
-    def __str__(self):
-        """String representation"""
-        return ""
     
 
 
