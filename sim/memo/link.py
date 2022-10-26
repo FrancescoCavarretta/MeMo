@@ -25,7 +25,7 @@ class Link:
         self.__distribution = distribution
 
         if "target" in kwargs:
-            self.target_feature, self.section_type, self.min_value, self.max_value = kwargs["target"]
+            self.target_feature, self.section_type, self.min_value, self.max_value, self.target_feature_distribution = kwargs["target"]
             assert self.target_feature == "diam" or self.target_feature == "dist" or self.target_feature == "order"
         
         # set the properties

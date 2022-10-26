@@ -93,7 +93,7 @@ def _compile(models, links, base, simobj):
         
         # set the filter attribute for the target on the output object
         if hasattr(simobj["object"], "target_feature"):
-            for _attrname in [ "target_feature", "section_type", "min_value", "max_value" ]:
+            for _attrname in [ "target_feature", "section_type", "min_value", "max_value", "target_feature_distribution" ]:                
                 setattr(real_class, _attrname, getattr(simobj["object"], _attrname))
 
         # set distribution

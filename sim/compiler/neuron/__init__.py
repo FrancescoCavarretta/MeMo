@@ -283,7 +283,7 @@ class SpikeTrain:
                 self.inter_distribution.make()
                 
             if hasattr(self, "burst_model") and self.burst_model:
-                print ('Here')
+                #print ('Here')
                 self.burst_model.make()
                 
             if hasattr(self, "modulation_model") and self.modulation_model:
@@ -654,11 +654,12 @@ class SynapseToCell:
         self.output = None
         self.product = None
         self.distribution = None
-        self.target_feature, self.section_type, self.min_value, self.max_value = None, None, None, None
+        self.target_feature, self.section_type, self.min_value, self.max_value, self.target_feature_distribution = None, None, None, None, None
         
         
     def make(self):
         if self.product is None:
+            #print (self.target_feature, self.section_type, self.min_value, self.max_value, self.target_feature_distribution)
             from neuron import h
             
             self.input.make()
@@ -671,16 +672,16 @@ class SynapseToCell:
                 while True:
                     X = self.distribution(interval=True)
                     if X == "somatic":
-                        targets = self.output.get(section_type="somatic", optional_X=self.distribution(name="uniform", a=0, b=1))
+                        targets = self.output.get(section_type="somatic", optional_X=self.distribution(name="uniform", a=0, b=1), target_feature_distribution=self.target_feature_distribution)
                     else:
                         targets = self.output.get(target_feature=self.target_feature, min_value=X[0], max_value=X[1], section_type=self.section_type, 
-                                                  optional_X=self.distribution(name="uniform", a=0, b=1))
+                                                  optional_X=self.distribution(name="uniform", a=0, b=1), target_feature_distribution=self.target_feature_distribution)
                     if targets:
                         break
                 segment = targets[0]
             else:
                 targets = self.output.get(target_feature=self.target_feature, min_value=self.min_value, max_value=self.max_value, section_type=self.section_type,
-                                          optional_X=self.distribution(name="uniform", a=0, b=1))
+                                          optional_X=self.distribution(name="uniform", a=0, b=1), target_feature_distribution=self.target_feature_distribution)
                 segment = targets[0]
             
             
@@ -704,7 +705,8 @@ class SynapseGroupToCell:
         self.output = None
         self.product = None
         self.distribution = None
-        self.target_feature, self.section_type, self.min_value, self.max_value = None, None, None, None
+        self.target_feature, self.section_type, self.min_value, self.max_value, self.target_feature_distribution = None, None, None, None, None
+
         
     def make(self):
         if self.product is None:
@@ -718,7 +720,7 @@ class SynapseGroupToCell:
                 syn2cell = SynapseToCell()
                 if self.distribution:
                     syn2cell.distribution = self.distribution[i]
-                    syn2cell.target_feature, syn2cell.section_type, syn2cell.min_value, syn2cell.max_value = self.target_feature, self.section_type, self.min_value, self.max_value
+                    syn2cell.target_feature, syn2cell.section_type, syn2cell.min_value, syn2cell.max_value, syn2cell.target_feature_distribution = self.target_feature, self.section_type, self.min_value, self.max_value, self.target_feature_distribution
                 syn2cell.input = self.input.product[i]
                 syn2cell.output = self.output
                 syn2cell.make()

@@ -51,19 +51,23 @@ def mk_vm_microcircuit_test(cellid,
   drvST = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
   modST = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
 
-
   si_drv = SynapticInputs("driver", drvSyn, drvST, cell)
   si_mod = SynapticInputs("modulator", modSyn, modST, cell)
-  si_bg = SynapticInputs("nigral", bgSyn, bgST, cell)
+  si_bg_sync = SynapticInputs("nigral", bgSyn, bgST, cell)
+  si_bg_async = SynapticInputs("nigral", bgSyn, bgST, cell)
   si_rtn = SynapticInputs("reticular", rtnSyn, rtnST, cell)
 
-  i2t = InputToThalamus("InputToVMThalamus", cell, si_drv, si_mod, si_bg, si_rtn)
+  i2t = InputToThalamus("InputToVMThalamus", cell, si_drv, si_mod, si_bg_sync, si_bg_async, si_rtn)
 
+  i2t.n_nigral    =  17
+  i2t.n_reticular = 7
+  i2t.n_modulator = 346
+  i2t.n_driver    = 35
+  
   vmcircuit = mc.MicroCircuit("VMThalamus")
   vmcircuit.add(i2t)
-  
-  return vmcircuit, i2t
 
+  return vmcircuit, i2t
 
 
 bodor_et_al2008 = {
@@ -74,127 +78,7 @@ bodor_et_al2008["weights"] /= np.sum(bodor_et_al2008["weights"])
 
 gsyn = np.load('gsyn.npy', allow_pickle=True).tolist()
 
-class Cell:
-  
-  def __del__(self):
-      del self.bpo_cell
-      del self.cell
-      del self.section
-      del self.product 
-      
-      self.bpo_cell = self.cell = self.section = self.product = None
-    
-  
-  def load_params(self, filename):
-    import numpy as np
-    return sorted(np.load(filename, allow_pickle=True).tolist().items())
-
-
-  def mk_cell_model(self, cellid, control):
-    import mkcell
-    import os
-
-    param = self.load_params(os.path.join(os.path.dirname(__file__), 'mkcell', "hof_3sd_good.npy"))
-
-    # select etype
-    etype = "control" if control else "lesioned"
-
-    # filter the etypes
-    param = [ p for p in param if p[0][0] == etype ][cellid][1]['parameter']
-
-    return mkcell.mk_cell_model(param, etype=etype)
-
-  def __init__(self, name, cellid=0, lesioned_flag=False):
-      self.name = name
-      self.cellid = cellid
-      self.product = None
-      self.lesioned_flag = lesioned_flag
-      
-
-  def make(self):
-    import numpy as np
-    import pandas as pd
-
-    if self.product is None:
-      print ('cellid', self.cellid, 'lesioned_flag', self.lesioned_flag)
-      self.bpo_cell = self.mk_cell_model(self.cellid, control=not self.lesioned_flag)
-      self.cell = self.bpo_cell.icell
-      self.morph_table, self.section = Cell.bpo2memo_cell(self.bpo_cell)
-      self.product = { "Cell":self.section, "MorphologyTable":self.morph_table }
-                
-    return self.product
-      
-
-  def branch_order(sec, soma_sec):
-    from neuron import h
-    order = 0
-    sref = h.SectionRef(sec=sec)
-    while sref.sec != soma_sec:
-      sref = h.SectionRef(sec=sref.parent)
-      order += 1
-    return order
-
-  def bpo2memo_cell(bpo_cell):
-    from neuron import h
-    import pandas as pd
-    
-    section_collection = {}
-    h.distance(sec=bpo_cell.icell.soma[0])
-    tab = pd.DataFrame(columns=["type", "segment", "name", "number", "diam", "len", "dist"])
-    for section_type in bpo_cell.seclist_names:
-      section_collection[section_type] = {}
-      if section_type != "all":
-        for section in getattr(bpo_cell.icell, section_type):
-          section_number = int(h.secname(sec=section).split("[")[-1].replace("]", ""))
-          section_collection[section_type][section_number] = section
-          for segment in section.allseg():
-            tab = tab.append({ "type":section_type,
-                               "segment":segment.x,
-                               "name":section,
-                               "number":section_number,
-                               "diam":segment.diam,
-                               "len":section.L / section.nseg,
-                               "dist":h.distance(segment.x, sec=section),
-                               "order":Cell.branch_order(section, bpo_cell.icell.soma[0])},
-                             ignore_index=True)
-            
-    tab["segment"] = tab["segment"].astype(float)
-    tab["dist"] = tab["dist"].astype(float)
-    tab["len"] = tab["len"].astype(float)
-    tab["number"] = tab["number"].astype(int)
-    tab["weights"] = tab["len"] / tab["len"].min()
-    return tab, section_collection        
-          
-
-  def get(self, target_feature=None, min_value=None, max_value=None, section_type="basal", optional_X=None):
-    import pandas as pd
-    
-    f = self.morph_table
-    if section_type:
-        if type(section_type) != list:
-            section_type = [ section_type ]
-        _f = pd.DataFrame()
-        for _st in section_type:
-            _f = _f.append(f[f["type"] == _st])
-        f = _f
-        del _f, _st 
-    
-    if target_feature:
-      if min_value:
-        f = f[f[target_feature] >= min_value]
-       
-      if max_value:
-        f = f[f[target_feature] < max_value]
-
-    f = f[[ 'type', 'number', 'segment', 'weights' ]]
-    
-    if f.shape[0] == 0:
-        return None
-    
-    if optional_X:
-        f['weights_cdf'] = (f['weights'] / f['weights'].sum()).cumsum()
-        f = f.loc[ f[f['weights_cdf'] >= optional_X].index[:1], ['type', 'number', 'segment']]
-    return [self.section[x["type"]][x["number"]](x["segment"]) for k, x in f.iterrows()]
+from thalamocortical_cell import Cell
 
 
 compiler.register_object(base, Cell)
@@ -232,11 +116,11 @@ class SynapticInputs(nrn.Model):
                         }[name]
 
     if target is None:
-        target = { "driver":("order", "basal", None, 2),
-                        "modulator":("order", "basal", 2, None),
-                        "reticular":("diam", "basal", None, None),
-                        "nigral":("diam", ["basal", "soma"], None, None)
-                        }[name]
+        target = { "driver":("order", "basal", None, 2, None),
+                   "modulator":("order", "basal", 2, None, None),
+                   "reticular":("diam", "basal", None, None, "area"),
+                   "nigral":("diam", ["basal", "soma"], None, None, None)
+                   }[name]
 
     self.syn2cell = link.Link(self.syn, self.cell, distribution=distribution, target=target)
 
@@ -295,10 +179,10 @@ class InputToThalamus(model.Model):
   
 def mk_vm_microcircuit(cellid,
                        lesioned_flag,
-                       bg_param ={"Regularity":5.0, "MeanRate":50.0, "n":17,  "g":gsyn['SNRx1'], 'burst':None, 'modulation':None, 'template':None },
-                       rtn_param={"Regularity":5.0, "MeanRate":10.0, "n":7,   "g":gsyn['rtn'], 'burst':None, 'modulation':None, 'template':None  },
-                       drv_param={"Regularity":5.0, "MeanRate":30.0, "n":17,  "g":gsyn['CN_VM'], 'modulation':None, 'NmdaAmpaRatio':0.6, 'template':None },
-                       mod_param={"Regularity":5.0, "MeanRate":15.0, "n":346, "g":gsyn['CX'], 'modulation':None, 'NmdaAmpaRatio':1.91, 'template':None },
+                       bg_param ={"Regularity":5.0, "MeanRate":50.0, "n":18,  "g":gsyn['SNRx1'], 'burst':None, 'modulation':None, 'template':None },
+                       rtn_param={"Regularity":5.0, "MeanRate":10.0, "n":6,   "g":gsyn['rtn'], 'burst':None, 'modulation':None, 'template':None  },
+                       drv_param={"Regularity":5.0, "MeanRate":30.0, "n":58,  "g":gsyn['CN_VM'], 'modulation':None, 'NmdaAmpaRatio':0.6, 'template':None },
+                       mod_param={"Regularity":5.0, "MeanRate":15.0, "n":584, "g":gsyn['CX'], 'modulation':None, 'NmdaAmpaRatio':1.91, 'template':None },
                        tstop=5000.0):
 
 
@@ -395,10 +279,6 @@ def mk_vm_microcircuit(cellid,
   i2t.gsyn_modulator = mod_param['g']
   i2t.gsyn_driver    = drv_param['g']
 
-
-  print(i2t.nigralASync.n, i2t.nigralSync.n)
-  #print ('ratio', i2t.driver.syn.syn.gsyn_nmda / i2t.driver.syn.syn.gsyn_ampa, i2t.driver.ratio, drvSyn.ratio)
-  #print ('ratio', i2t.modulator.syn.syn.gsyn_nmda / i2t.modulator.syn.syn.gsyn_ampa, i2t.modulator.ratio, modSyn.ratio)
   
   vmcircuit = mc.MicroCircuit("VMThalamus")
   vmcircuit.add(i2t)
@@ -433,10 +313,20 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
   retsim = precompiler.precompile(vmcircuit, seed)
   compiler.compile(retsim, base)
 
-##  import matplotlib.pyplot as plt
-##  for i, p in enumerate(r["models"][i2t.nigral.spktr]["real_simobj"].product):
-##    plt.eventplot(p.product, lineoffsets=i, color='red', linewidth=0.1)
-##  plt.show()
+  if '--save-spike-train' in sys.argv:
+    with open(sys.argv[sys.argv.index('--save-spike-train') + 1], 'w') as fo:
+      for input_name, spike_tr in [ ('modulator', i2t.modulator.spktr), ('driver', i2t.driver.spktr), ('reticular', i2t.reticular.spktr), ('nigral', i2t.nigralSync.spktr), ('nigral', i2t.nigralASync.spktr) ]:
+        for itr, p in  enumerate(retsim["models"][spike_tr]["real_simobj"].product):
+          for tspk in p.product:
+            fo.write('%s %d %g\n' % (input_name, itr, tspk))
+            
+  if '--save-syn-distribution' in sys.argv:
+    with open(sys.argv[sys.argv.index('--save-syn-distribution') + 1], 'w') as fo:
+      for input_name, syn2cell in [ ('modulator', i2t.modulator.syn2cell), ('driver', i2t.driver.syn2cell), ('reticular', i2t.reticular.syn2cell), ('nigral', i2t.nigralSync.syn2cell), ('nigral', i2t.nigralASync.syn2cell) ]:
+        for isyn, p in  enumerate(retsim["links"][syn2cell]["real_simobj"].product):
+          p = p.product['Segment']
+          fo.write('%s %s %d %g %s %g\n' % (input_name, h.secname(sec=p['Section']), h.distance(p['Arc'], sec=p['Section']), p['Section'](p['Arc']).diam, p['Section'](p['Arc']), p['Section'](p['Arc']).area()))
+
 
 
   # instantiate the recorders
@@ -516,76 +406,78 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
 
 #  h.cvode.use_fast_imem(1)
 #  h.cvode.cache_efficient(1)
-  h.cvode_active(0)
 
-  #pc = h.ParallelContext(1)
+  if '--no-run' not in sys.argv:
+    h.cvode_active(0)
 
-  from neuron import coreneuron
-  coreneuron.enable = True
-  coreneuron.verbose = 0
-  #coreneuron.gpu = True
-  pc = h.ParallelContext(1)
+    #pc = h.ParallelContext(1)
 
-  h.finitialize(v_init)
-  h.stdinit()
-  h.t = 0.
+    from neuron import coreneuron
+    coreneuron.enable = True
+    coreneuron.verbose = 0
+    #coreneuron.gpu = True
+    pc = h.ParallelContext(1)
 
-  
-
-  first_run = True
-  t_total = 0.
-  
-  t = 0.
-  while t < tstop:
-    if t_checkpoint and (t + t_checkpoint) < tstop:
-      tnext = t + t_checkpoint
-    else:
-      tnext = tstop
+    h.finitialize(v_init)
+    h.stdinit()
+    h.t = 0.
 
     
 
-
-    t0 = time.time()
-    if first_run:
-      #h.tstop = tnext # update
-      pc.psolve(tnext)
-    else:
-      pc.psolve(tnext)
-    tsolve = time.time() - t0
+    first_run = True
+    t_total = 0.
     
-    # verbose
-    #print ('checkpoint', h.t, tnext)
-    t0 = time.time()
-    # flush recordings
-    for rec in recordings.values():
-      rec._flush()
-    tflush = time.time() - t0
+    t = 0.
+    while t < tstop:
+      if t_checkpoint and (t + t_checkpoint) < tstop:
+        tnext = t + t_checkpoint
+      else:
+        tnext = tstop
 
-    t_total += tsolve + tflush
-    first_run = False
+      
 
-    t = tnext
-    print ('\t', tnext, first_run, h.t, t, tstop, h.tstop, tsolve, tflush, tsolve + tflush)
-  print (t_total, '\n')
-  # clear all the objects
-  compiler.clear(retsim)
 
-  pc.done()
+      t0 = time.time()
+      if first_run:
+        #h.tstop = tnext # update
+        pc.psolve(tnext)
+      else:
+        pc.psolve(tnext)
+      tsolve = time.time() - t0
+      
+      # verbose
+      #print ('checkpoint', h.t, tnext)
+      t0 = time.time()
+      # flush recordings
+      for rec in recordings.values():
+        rec._flush()
+      tflush = time.time() - t0
 
-  pc = None
+      t_total += tsolve + tflush
+      first_run = False
 
-  # return
-  return { k:rec.get(dt=dt) for k, rec in recordings.items() }
+      t = tnext
+      print ('\t', tnext, first_run, h.t, t, tstop, h.tstop, tsolve, tflush, tsolve + tflush)
+    print (t_total, '\n')
+    # clear all the objects
+    compiler.clear(retsim)
 
+    pc.done()
+
+    pc = None
+
+    # return
+    return { k:rec.get(dt=dt) for k, rec in recordings.items() }
+  return {}
 
 
 def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recording=False, all_synapse_recording=False, current_recording=[], rec_invl=50.0, varname=["_ref_v", "_ref_i_membrane_"], dt=0.1, **kwargs):
 
   params = {
-          'bg':{"Regularity":5.0, "MeanRate":50.0, "n":17,   "g":gsyn['SNRx1'], 'burst':None, 'modulation':None, 'template':None },
-          'rtn':{"Regularity":5.0, "MeanRate":10.0, "n":7,   "g":gsyn['rtn'], 'burst':None, 'modulation':None, 'template':None},
-          'drv':{"Regularity":5.0, "MeanRate":30.0, "n":17,  "g":gsyn['CN_VM'], 'modulation':None, 'NmdaAmpaRatio':0.6, 'template':None },
-          'mod':{"Regularity":5.0, "MeanRate":15.0, "n":346, "g":gsyn['CX'], 'modulation':None, 'NmdaAmpaRatio':1.91, 'template':None}
+          'bg':{"Regularity":5.0, "MeanRate":50.0, "n":18,   "g":gsyn['SNRx1'], 'burst':None, 'modulation':None, 'template':None },
+          'rtn':{"Regularity":5.0, "MeanRate":10.0, "n":6,   "g":gsyn['rtn'], 'burst':None, 'modulation':None, 'template':None},
+          'drv':{"Regularity":5.0, "MeanRate":30.0, "n":58,  "g":gsyn['CN_VM'], 'modulation':None, 'NmdaAmpaRatio':0.6, 'template':None },
+          'mod':{"Regularity":5.0, "MeanRate":15.0, "n":584, "g":gsyn['CX'], 'modulation':None, 'NmdaAmpaRatio':1.91, 'template':None}
           }
 
   
@@ -613,12 +505,12 @@ def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recordin
 
   vmcircuit, i2t = mk_vm_microcircuit(cellid, lesioned_flag, tstop=tstop, bg_param=params['bg'], rtn_param=params['rtn'], drv_param=params['drv'], mod_param=params['mod'])
 
-  return run(vmcircuit, i2t, tstop, (seed, seed), key,
+  return run(vmcircuit, i2t, tstop, (seed, 0), key,
              all_section_recording=all_section_recording, all_synapse_recording=all_synapse_recording, current_recording=current_recording,
-             rec_invl=rec_invl, varname=varname, dt=dt)
+             rec_invl=rec_invl, varname=varname, dt=dt), params
 
 
-def save_results(cc, fw=None, numpy_flag=False, verbose=False):
+def save_results(cc, params, fw=None, numpy_flag=False, verbose=False):
     import numpy as np
     for key_res, data_res in cc.items():
         if verbose:
@@ -631,12 +523,12 @@ def save_results(cc, fw=None, numpy_flag=False, verbose=False):
 
 def run_simulation_output(cellid, lesioned_flag, tstop, seed, key, all_section_recording=False, all_synapse_recording=False, current_recording=[], rec_invl=50.0, varname=["_ref_v"], dt=0.2, **kwargs):
     import sys
-    output = run_simulation(cellid, lesioned_flag, tstop, seed, key,
+    output, params = run_simulation(cellid, lesioned_flag, tstop, seed, key,
                             all_section_recording=all_section_recording, all_synapse_recording=all_synapse_recording,
                             current_recording=current_recording, rec_invl=rec_invl, varname=varname, dt=dt, **kwargs)
 
     fw = nwbio.FileWriter(key + ".nwb", "thalamic_data", "thalamic_data_id", max_size=None)
-    save_results(output, fw=fw)
+    save_results(output, str(params), fw=fw)
     fw.close()
 
 
