@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-def mk_cell_model(params, recipes=None, etype="control", cvode_active=True):
+def mk_cell_model(params, recipes=None, etype="control", cvode_active=True, altmorph=None):
   import os
   import json
   
@@ -12,7 +12,7 @@ def mk_cell_model(params, recipes=None, etype="control", cvode_active=True):
   if recipes is None:
     with open(os.path.join(os.path.dirname(__file__), '.', 'config/recipes.json')) as f:
       recipe = json.load(f)
-  c = CellEvalSetup.template.create(recipe, etype)
+  c = CellEvalSetup.template.create(recipe, etype, altmorph=altmorph)
   c.freeze(params)
   c.instantiate(sim=NrnSimulator(cvode_active=cvode_active))
   return c
