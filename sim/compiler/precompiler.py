@@ -30,7 +30,7 @@ class SeedGenerator:
             self.seed = list(seed)
         elif type(seed) == int:
             # if an integer, generalize to a list
-            self.seed = [seed]
+            self.seed = [seed, 0]
         elif type(seed) == list:
             self.seed = seed + []
         else:
@@ -45,8 +45,7 @@ class SeedGenerator:
         -------
         integer or tuple, depending on the seed format
         """
-        for i in range(len(self.seed)):
-            self.seed[i] += 1       
+        self.seed[-1] += 1       
         return self.seed[0] if len(self.seed) == 1 else tuple(self.seed)
     
     
