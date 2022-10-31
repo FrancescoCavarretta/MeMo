@@ -59,9 +59,40 @@ class Cell:
     return order
 
   def bpo2memo_cell(bpo_cell):
+
     from neuron import h
     import pandas as pd
     import numpy as np
+
+    
+    def soma_pos():
+      sec = bpo_cell.icell.soma[0]
+      points = np.array([[sec.x3d(i), sec.y3d(i), sec.z3d(i)] for i in range(sec.n3d())])
+      return np.mean(points, axis=0)
+
+    
+    def arc2xyz(sec, arc):
+        points = np.array([[sec.x3d(i), sec.y3d(i), sec.z3d(i)] for i in range(sec.n3d())])
+
+        d = np.cumsum(np.linalg.norm(points[1:, :] - points[:-1, :], axis=1))
+        ds = arc * d[-1]
+        index = np.argwhere(ds <= d).T[0, 0]
+        if index == 0:
+          dmin = 0
+        else:
+          dmin = d[index-1]
+        dmax = d[index]
+        
+        a = points[index, :]
+        b = points[index + 1, :]
+        return (b - a) * (ds - dmin) / (dmax - dmin) + a
+      
+      
+    def dist_from_soma(sec, arc):
+      return np.linalg.norm(soma_pos() - arc2xyz(sec, arc))
+    
+
+
     
     section_collection = {}
     h.distance(sec=bpo_cell.icell.soma[0])
@@ -73,26 +104,31 @@ class Cell:
           section_number = int(h.secname(sec=section).split("[")[-1].replace("]", ""))
           section_collection[section_type][section_number] = section
           for segment in section.allseg():
-            tab = tab.append({ "type":section_type,
-                               "segment":segment.x,
-                               "name":section,
-                               "number":section_number,
-                               "diam":segment.diam,
-                               "len":segment.area() / (segment.diam * np.pi),
-                               "dist":h.distance(segment.x, sec=section),
-                               "order":Cell.branch_order(section, bpo_cell.icell.soma[0]),
-                               "area":segment.area()},
-                             ignore_index=True)
+            try:
+              tab = tab.append({ "type":section_type,
+                                 "segment":segment.x,
+                                 "name":section,
+                                 "number":section_number,
+                                 "diam":segment.diam,
+                                 "len":segment.area() / (segment.diam * np.pi),
+                                 "pathdist":h.distance(segment.x, sec=section),
+                                 "dist":dist_from_soma(section, segment.x),
+                                 "order":Cell.branch_order(section, bpo_cell.icell.soma[0]),
+                                 "area":segment.area()},
+                               ignore_index=True)
+            except IndexError:
+              pass
+              #print (section_type)
     tab = tab[tab.area > 0]
     tab["segment"] = tab["segment"].astype(float)
     tab["dist"] = tab["dist"].astype(float)
     tab["len"] = tab["len"].astype(float)
     tab["number"] = tab["number"].astype(int)
-    tab["weights"] = tab["len"]
+    
     return tab, section_collection        
           
 
-  def get(self, target_feature=None, min_value=None, max_value=None, section_type="basal", optional_X=None, target_feature_distribution=None):
+  def get(self, target_feature=None, min_value=None, max_value=None, section_type="basal", optional_X=None, target_feature_distribution=None, shuffle=None):
     import pandas as pd
     
     f = self.morph_table.copy()
@@ -114,20 +150,51 @@ class Cell:
     if f.shape[0] == 0:
         return None
     
-    if optional_X:
+
+    if shuffle:
+      tmp = pd.DataFrame()
+      while f.shape[0] > 0:
+        idx = f.index[int(shuffle(name="uniform", a=0, b=1) * f.index.size)]
+        tmp = pd.concat([tmp, f.loc[idx, :].to_frame().T])
+        f.drop(idx, inplace=True)
+      f = tmp
+
+    if target_feature_distribution is None:
+      target_feature_distribution = 'len'
+
+    f['weights_cdf'] = f[target_feature_distribution].cumsum() / f[target_feature_distribution].sum()
     
-      if target_feature_distribution is None:
-        f['weights_cdf'] = f['weights'].cumsum() / f['weights'].sum()
-      else:
-        f['weights_cdf'] = f[target_feature_distribution].cumsum() / f[target_feature_distribution].sum()
-        
-      f = f[f['weights_cdf'] >= optional_X].iloc[[0], :]
+    if optional_X:        
+      f = f[optional_X <= f['weights_cdf']].iloc[[0], :]
 
     return [self.section[x["type"]][x["number"]](x["segment"]) for k, x in f.iterrows()]
 
 
 if __name__ == '__main__':
+  import numpy as np
+  from numpy import linalg
   c = Cell('Test')
   c.make()
   c.product['MorphologyTable'].to_csv('../analysis/density/morphology_table.csv')
-  
+
+  def print_spatial_extract(sec):
+    return  linalg.norm(np.array([ sec.x3d(0), sec.y3d(0), sec.z3d(0) ]) - np.array([ sec.x3d(sec.n3d() - 1), sec.y3d(sec.n3d() - 1), sec.z3d(sec.n3d() - 1) ]) ) 
+
+
+  vec = []
+  for s in [  c.cell.dend[0],   c.cell.dend[7],   c.cell.dend[12],   c.cell.dend[21],   c.cell.dend[22],   c.cell.dend[24]  ]:
+    vec.append(print_spatial_extract(s))
+
+  import matplotlib.pyplot as plt
+  import neurom
+  from neurom import load_morphology, features
+  from neurom import viewer
+  _, ax = viewer.draw(neurom.load_morphology('mkcell/morphologies/test.swc'), mode='3d', color='black')
+  ax.set_xlim([-350, 350])
+  ax.set_ylim([-250, 450])
+  ax.set_zlim([-275, 425])
+  ax.set_xlabel('x ($\mu$m)')
+  ax.set_ylabel('y ($\mu$m)')
+  ax.set_zlabel('z ($\mu$m)')
+  ax.set_axis_off()
+  plt.show()

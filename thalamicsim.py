@@ -116,8 +116,8 @@ class SynapticInputs(nrn.Model):
                         }[name]
 
     if target is None:
-        target = { "driver":("order", "basal", None, 2, None),
-                   "modulator":("order", "basal", 2, None, None),
+        target = { "driver":("dist", "basal", 0.0, 75, "area"),
+                   "modulator":("dist", "basal", 75, None, "area"),
                    "reticular":("diam", "basal", None, None, "area"),
                    "nigral":("diam", ["basal", "soma"], None, None, None)
                    }[name]
@@ -179,10 +179,10 @@ class InputToThalamus(model.Model):
   
 def mk_vm_microcircuit(cellid,
                        lesioned_flag,
-                       bg_param ={"Regularity":5.0, "MeanRate":50.0, "n":18,  "g":gsyn['SNRx1'], 'burst':None, 'modulation':None, 'template':None },
-                       rtn_param={"Regularity":5.0, "MeanRate":10.0, "n":6,   "g":gsyn['rtn'], 'burst':None, 'modulation':None, 'template':None  },
-                       drv_param={"Regularity":5.0, "MeanRate":30.0, "n":58,  "g":gsyn['CN_VM'], 'modulation':None, 'NmdaAmpaRatio':0.6, 'template':None },
-                       mod_param={"Regularity":5.0, "MeanRate":15.0, "n":584, "g":gsyn['CX'], 'modulation':None, 'NmdaAmpaRatio':1.91, 'template':None },
+                       bg_param ={"Regularity":5.0, "MeanRate":50.0, "n":20,  "g":gsyn['SNRx1'], 'burst':None, 'modulation':None, 'template':None },
+                       rtn_param={"Regularity":5.0, "MeanRate":10.0, "n":5,   "g":gsyn['rtn'], 'burst':None, 'modulation':None, 'template':None  },
+                       drv_param={"Regularity":5.0, "MeanRate":30.0, "n":60,  "g":gsyn['CN_VM'], 'modulation':None, 'NmdaAmpaRatio':0.6, 'template':None },
+                       mod_param={"Regularity":5.0, "MeanRate":15.0, "n":585, "g":gsyn['CX'], 'modulation':None, 'NmdaAmpaRatio':1.91, 'template':None },
                        tstop=5000.0):
 
 
@@ -474,10 +474,10 @@ def run(vmcircuit, i2t, tstop, seed, key, v_init=-78.0, all_section_recording=Fa
 def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recording=False, all_synapse_recording=False, current_recording=[], rec_invl=50.0, varname=["_ref_v", "_ref_i_membrane_"], dt=0.1, **kwargs):
 
   params = {
-          'bg':{"Regularity":5.0, "MeanRate":50.0, "n":18,   "g":gsyn['SNRx1'], 'burst':None, 'modulation':None, 'template':None },
-          'rtn':{"Regularity":5.0, "MeanRate":10.0, "n":6,   "g":gsyn['rtn'], 'burst':None, 'modulation':None, 'template':None},
-          'drv':{"Regularity":5.0, "MeanRate":30.0, "n":58,  "g":gsyn['CN_VM'], 'modulation':None, 'NmdaAmpaRatio':0.6, 'template':None },
-          'mod':{"Regularity":5.0, "MeanRate":15.0, "n":584, "g":gsyn['CX'], 'modulation':None, 'NmdaAmpaRatio':1.91, 'template':None}
+          'bg':{"Regularity":5.0, "MeanRate":50.0, "n":20,   "g":gsyn['SNRx1'], 'burst':None, 'modulation':None, 'template':None },
+          'rtn':{"Regularity":5.0, "MeanRate":10.0, "n":5,   "g":gsyn['rtn'], 'burst':None, 'modulation':None, 'template':None},
+          'drv':{"Regularity":5.0, "MeanRate":30.0, "n":60,  "g":gsyn['CN_VM'], 'modulation':None, 'NmdaAmpaRatio':0.6, 'template':None },
+          'mod':{"Regularity":5.0, "MeanRate":15.0, "n":585, "g":gsyn['CX'], 'modulation':None, 'NmdaAmpaRatio':1.91, 'template':None}
           }
 
   
