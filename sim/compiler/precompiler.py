@@ -45,7 +45,8 @@ class SeedGenerator:
         -------
         integer or tuple, depending on the seed format
         """
-        self.seed[-1] += 1       
+        #self.seed[0] += 1   
+        self.seed[1] += 1      
         return self.seed[0] if len(self.seed) == 1 else tuple(self.seed)
     
     

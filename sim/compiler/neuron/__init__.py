@@ -667,23 +667,26 @@ class SynapseToCell:
             
             if self.distribution:
                 self.distribution.make()
+
+            while True:            
+                if self.distribution.name == "empirical":
+                        try:
+                            X = self.distribution(interval=True)
+                            if X == "somatic":
+                                targets = self.output.get(section_type="somatic", optional_X=self.distribution(name="uniform", a=0, b=1), target_feature_distribution=self.target_feature_distribution)
+                            else:
+                                targets = self.output.get(target_feature=self.target_feature, min_value=X[0], max_value=X[1], section_type=self.section_type, 
+                                                          optional_X=self.distribution(name="uniform", a=0, b=1), target_feature_distribution=self.target_feature_distribution)
+                        except IndexError:
+                            targets = None
+                else:
+                    targets = self.output.get(target_feature=self.target_feature, min_value=self.min_value, max_value=self.max_value, section_type=self.section_type,
+                                              optional_X=self.distribution(name="uniform", a=0, b=1), target_feature_distribution=self.target_feature_distribution)
+
+                if targets:
+                    break
             
-            if self.distribution.name == "empirical":
-                while True:
-                    X = self.distribution(interval=True)
-                    if X == "somatic":
-                        targets = self.output.get(section_type="somatic", optional_X=self.distribution(name="uniform", a=0, b=1), target_feature_distribution=self.target_feature_distribution)
-                    else:
-                        targets = self.output.get(target_feature=self.target_feature, min_value=X[0], max_value=X[1], section_type=self.section_type, 
-                                                  optional_X=self.distribution(name="uniform", a=0, b=1), target_feature_distribution=self.target_feature_distribution)
-                    if targets:
-                        break
-                segment = targets[0]
-            else:
-                targets = self.output.get(target_feature=self.target_feature, min_value=self.min_value, max_value=self.max_value, section_type=self.section_type,
-                                          optional_X=self.distribution(name="uniform", a=0, b=1), target_feature_distribution=self.target_feature_distribution)
-                segment = targets[0]
-            
+            segment = targets[0]
             
             self.input.product.loc(segment.x, sec=segment.sec)
             self.product = { self.input.name:self.input.product,
