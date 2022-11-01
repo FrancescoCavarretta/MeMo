@@ -3,7 +3,7 @@ from thalamicsim import mk_vm_microcircuit_test, base, compiler, precompiler, re
 import numpy as np
 
 ntrial = 5
-nmodel = len([k for k in np.load('mkcell/hof_3sd_good_2nd.npy', allow_pickle=True).tolist().keys() if k[0] == 'control'])
+nmodel = len([k for k in np.load('mkcell/hof_3sd_good.npy', allow_pickle=True).tolist().keys() if k[0] == 'control'])
 print ('nmodel', nmodel)
 
 
@@ -135,7 +135,7 @@ g = {"SNRx13":g_mean_snr_13, "SNRx1":g_mean_snr_1, "SNRx3":g_mean_snr_3,
      "CN_VL":g_mean_cn_vl,
      "rtn": g_mean_rtn}
 
-np.save("gsyn.npy", g, allow_pickle=True)
+np.save("gsyn.old.npy", g, allow_pickle=True)
 
 for k in g:
     print (k, np.mean(g[k]))

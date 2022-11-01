@@ -57,8 +57,9 @@ data['section_type'] = data['segment_id'].apply(lambda x : section_type(x))
 data['section_arc'] = data['segment_id'].apply(lambda x : section_arc(x))
 c = Cell('Test')
 c.make()
-m = neurom.load_morphology('mkcell/morphologies/test.swc')
-_, ax = viewer.draw(m, mode='3d', color='black')
+m = neurom.load_morphology('test.swc')
+fig, ax = viewer.draw(m, mode='3d', color='black')
+fig.set_size_inches(20, 20)
 ax.set_xlim([-350, 350])
 ax.set_ylim([-250, 450])
 ax.set_zlim([-275, 425])
@@ -67,14 +68,24 @@ ax.set_ylabel('y ($\mu$m)')
 ax.set_zlabel('z ($\mu$m)')
 ax.set_axis_off()
 
-x = []
-y = []
-z = []
-for _, r in data[data.input_name == 'driver'].iterrows():
-  #print(, , r.path_distance)
-  _x, _y, _z = arc2xyz(c, r.section_type, r.section_index, r.section_arc)
-  x.append(_x)
-  y.append(_y)
-  z.append(_z)
-ax.scatter(x, y, z, color='blue', s=10)
+def plot_synapses(ax, c, data, input_name, sz, color):
+  x = []
+  y = []
+  z = []
+  for _, r in data[data.input_name == input_name].iterrows():
+    #print(, , r.path_distance)
+    _x, _y, _z = arc2xyz(c, r.section_type, r.section_index, r.section_arc)
+    x.append(_x)
+    y.append(_y)
+    z.append(_z)
+  ax.scatter(x, y, z, color=color, s=sz)
+
+
+
+#plot_synapses(ax, c, data, 'driver', 8, 'red')
+#plot_synapses(ax, c, data, 'modulator', 4, 'magenta')
+#plt.show()
+
+plot_synapses(ax, c, data, 'nigral', 8, 'blue')
+plot_synapses(ax, c, data, 'reticular', 5, 'cyan')
 plt.show() 

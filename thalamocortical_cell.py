@@ -18,7 +18,7 @@ class Cell:
     import mkcell
     import os
 
-    param = self.load_params(os.path.join(os.path.dirname(__file__), 'mkcell', "hof_3sd_good_2nd.npy"))
+    param = self.load_params(os.path.join(os.path.dirname(__file__), 'mkcell', "hof_3sd_good.npy"))
 
     # select etype
     etype = "control" if control else "lesioned"
@@ -146,9 +146,7 @@ class Cell:
        
       if max_value:
         f = f[f[target_feature] < max_value]
-    
-    if f.shape[0] == 0:
-        return None
+
     
 
     if shuffle:
@@ -166,7 +164,10 @@ class Cell:
     
     if optional_X:        
       f = f[optional_X <= f['weights_cdf']].iloc[[0], :]
-
+    
+    if f.shape[0] == 0:
+        return None
+      
     return [self.section[x["type"]][x["number"]](x["segment"]) for k, x in f.iterrows()]
 
 
@@ -177,19 +178,11 @@ if __name__ == '__main__':
   c.make()
   c.product['MorphologyTable'].to_csv('../analysis/density/morphology_table.csv')
 
-  def print_spatial_extract(sec):
-    return  linalg.norm(np.array([ sec.x3d(0), sec.y3d(0), sec.z3d(0) ]) - np.array([ sec.x3d(sec.n3d() - 1), sec.y3d(sec.n3d() - 1), sec.z3d(sec.n3d() - 1) ]) ) 
-
-
-  vec = []
-  for s in [  c.cell.dend[0],   c.cell.dend[7],   c.cell.dend[12],   c.cell.dend[21],   c.cell.dend[22],   c.cell.dend[24]  ]:
-    vec.append(print_spatial_extract(s))
-
   import matplotlib.pyplot as plt
   import neurom
   from neurom import load_morphology, features
   from neurom import viewer
-  _, ax = viewer.draw(neurom.load_morphology('mkcell/morphologies/test.swc'), mode='3d', color='black')
+  _, ax = viewer.draw(neurom.load_morphology('test.swc'), mode='3d', color='black')
   ax.set_xlim([-350, 350])
   ax.set_ylim([-250, 450])
   ax.set_zlim([-275, 425])
