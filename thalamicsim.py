@@ -589,6 +589,10 @@ if __name__ == '__main__':
   else:
     current_recording = []
 
+  if '--total_current_recording' in sys.argv:
+    varname = ["_ref_v", "_ref_i_membrane_"]
+  else:
+    varname = ["_ref_v"]
 
   print (f"cellid={cellid}\nseed={seed}\n6ohda={'on' if lesioned_flag else 'off'}\ntstop={tstop}\nkey={key}\nother params{params}")
   run_simulation_output(cellid,
@@ -599,5 +603,6 @@ if __name__ == '__main__':
                         all_section_recording=('--all_section_recording' in sys.argv),
                         all_synapse_recording=('--all_synapse_recording' in sys.argv),
                         current_recording=current_recording,
+                        varname=varname,
                         **params)
   sys.exit(0)

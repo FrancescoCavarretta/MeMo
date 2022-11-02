@@ -120,7 +120,7 @@
 
 
 def to_command_line(cellid, lesioned_flag, tstop, seed, key,
-                    all_section_recording, all_synapse_recording, all_current_recording, **kwargs):
+                    all_section_recording, all_synapse_recording, all_current_recording, total_current_recording, **kwargs):
     s = '--cellid %d' % cellid
 
     if lesioned_flag:
@@ -136,9 +136,12 @@ def to_command_line(cellid, lesioned_flag, tstop, seed, key,
     if all_synapse_recording:
         s += ' --all_synapse_recording'
 
+    if total_current_recording:
+        s += ' --total_current_recording'
+        
     if all_current_recording:
-        s += ' --all_current_recording' 
-
+        s += ' --all_current_recording'
+        
     for k, v in kwargs.items():
         s += ' --' + k + '=' + str(v)
 
@@ -194,7 +197,8 @@ if __name__ == '__main__':
     all_section_recording = '--all_section_recording' in sys.argv
     all_synapse_recording = '--all_synapse_recording' in sys.argv
     all_current_recording = '--all_current_recording' in sys.argv
-
+    total_current_recording =  = '--total_current_recording' in sys.argv
+    
     if '--dt' in sys.argv:
         dt = float(sys.argv[sys.argv.index('--dt')+1])
     else:
@@ -235,35 +239,35 @@ if __name__ == '__main__':
     # client
 ##    cc = CustomClient(filenameout, max_size=file_max_size, max_process=max_process)
     
-    if all_current_recording:
-##                current_recording = [
-##                    '_ref_i_output_BK', '_ref_output_BK',
-##                    '_ref_i_output_iM', '_ref_output_iM',
-##                    '_ref_i_output_TC_iT_Des98', '_ref_output_TC_iT_Des98',
-##                    '_ref_i_output_TC_iL', '_ref_output_TC_iL',
-##                    '_ref_i_output_TC_ih_Bud97', '_ref_output_TC_ih_Bud97',
-##                    '_ref_i_output_TC_iD', '_ref_output_TC_iD',
-##                    '_ref_i_output_TC_iA', '_ref_output_TC_iA',
-##                    '_ref_i_output_SK_E2', '_ref_output_SK_E2',
-##                    '_ref_i_output_nat_TC_HH', '_ref_output_nat_TC_HH',
-##                    '_ref_i_output_nap_TC_HH', '_ref_output_nap_TC_HH',
-##                    '_ref_i_output_k_TC_HH', '_ref_output_k_TC_HH'
-##                    ]
-        current_recording = [
-            '_ref_i_output_BK', 
-            '_ref_i_output_iM', 
-            '_ref_i_output_TC_iT_Des98', 
-            '_ref_i_output_TC_iL', 
-            '_ref_i_output_TC_ih_Bud97', 
-            '_ref_i_output_TC_iD', 
-            '_ref_i_output_TC_iA', 
-            '_ref_i_output_SK_E2', 
-            '_ref_i_output_nat_TC_HH', 
-            '_ref_i_output_nap_TC_HH', 
-            '_ref_i_output_k_TC_HH', 
-            ]                
-    else:
-        current_recording = []
+####    if all_current_recording:
+######                current_recording = [
+######                    '_ref_i_output_BK', '_ref_output_BK',
+######                    '_ref_i_output_iM', '_ref_output_iM',
+######                    '_ref_i_output_TC_iT_Des98', '_ref_output_TC_iT_Des98',
+######                    '_ref_i_output_TC_iL', '_ref_output_TC_iL',
+######                    '_ref_i_output_TC_ih_Bud97', '_ref_output_TC_ih_Bud97',
+######                    '_ref_i_output_TC_iD', '_ref_output_TC_iD',
+######                    '_ref_i_output_TC_iA', '_ref_output_TC_iA',
+######                    '_ref_i_output_SK_E2', '_ref_output_SK_E2',
+######                    '_ref_i_output_nat_TC_HH', '_ref_output_nat_TC_HH',
+######                    '_ref_i_output_nap_TC_HH', '_ref_output_nap_TC_HH',
+######                    '_ref_i_output_k_TC_HH', '_ref_output_k_TC_HH'
+######                    ]
+####        current_recording = [
+####            '_ref_i_output_BK', 
+####            '_ref_i_output_iM', 
+####            '_ref_i_output_TC_iT_Des98', 
+####            '_ref_i_output_TC_iL', 
+####            '_ref_i_output_TC_ih_Bud97', 
+####            '_ref_i_output_TC_iD', 
+####            '_ref_i_output_TC_iA', 
+####            '_ref_i_output_SK_E2', 
+####            '_ref_i_output_nat_TC_HH', 
+####            '_ref_i_output_nap_TC_HH', 
+####            '_ref_i_output_k_TC_HH', 
+####            ]                
+####    else:
+####        current_recording = []
 
     #while len(params) or cc.running():
         #print (len(params), cc.running(), cc.any_available())
@@ -274,7 +278,7 @@ if __name__ == '__main__':
             
             #print ('applying', _param, to_command_line(*_param['args'], all_section_recording, all_synapse_recording, all_current_recording, **_param['kwargs']))
     with Pool() as pool:
-        res = pool.starmap(simstub, [('./x86_64/special thalamicsim.py ' + to_command_line(*_param['args'], all_section_recording, all_synapse_recording, all_current_recording, **_param['kwargs']), _param['args'][4]) \
+        res = pool.starmap(simstub, [('./x86_64/special thalamicsim.py ' + to_command_line(*_param['args'], all_section_recording, all_synapse_recording, all_current_recording, total_current_recording, **_param['kwargs']), _param['args'][4]) \
                                for _param in params ])
             #print ('\t', './x86_64/special thalamicsim.py ' + to_command_line(*_param['args'], all_section_recording, all_synapse_recording, all_current_recording, **_param['kwargs']))
 
