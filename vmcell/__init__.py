@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 class Cell:
   
   def __del__(self):
@@ -14,8 +17,24 @@ class Cell:
     return sorted(np.load(filename, allow_pickle=True).tolist().items())
 
 
+  def _mk_cell_model(self, params, recipes=None, etype="control", cvode_active=True, altmorph=None):
+    import os
+    import json
+    
+    from . import CellEvalSetup
+    from bluepyopt.ephys.simulators import NrnSimulator
+    from bluepyopt.ephys import models
+
+    if recipes is None:
+      with open(os.path.join(os.path.dirname(__file__), '.', 'config/recipes.json')) as f:
+        recipe = json.load(f)
+    c = CellEvalSetup.template.create(recipe, etype, altmorph=altmorph)
+    c.freeze(params)
+    c.instantiate(sim=NrnSimulator(cvode_active=cvode_active))
+    return c
+
+
   def mk_cell_model(self, cellid, control):
-    import mkcell
     import os
 
     param = self.load_params(os.path.join(os.path.dirname(__file__), 'mkcell', "hof_3sd_good.npy"))
@@ -26,7 +45,8 @@ class Cell:
     # filter the etypes
     param = [ p for p in param if p[0][0] == etype ][cellid][1]['parameter']
 
-    return mkcell.mk_cell_model(param, etype=etype)
+    return self._mk_cell_model(param, etype=etype)
+  
 
   def __init__(self, name, cellid=0, lesioned_flag=False):
       self.name = name
@@ -40,7 +60,6 @@ class Cell:
     import pandas as pd
 
     if self.product is None:
-      print ('cellid', self.cellid, 'lesioned_flag', self.lesioned_flag)
       self.bpo_cell = self.mk_cell_model(self.cellid, control=not self.lesioned_flag)
       self.cell = self.bpo_cell.icell
       self.morph_table, self.section = Cell.bpo2memo_cell(self.bpo_cell)
@@ -118,7 +137,7 @@ class Cell:
                                ignore_index=True)
             except IndexError:
               pass
-              #print (section_type)
+
     tab = tab[tab.area > 0]
     tab["segment"] = tab["segment"].astype(float)
     tab["dist"] = tab["dist"].astype(float)
@@ -191,3 +210,4 @@ if __name__ == '__main__':
   ax.set_zlabel('z ($\mu$m)')
   ax.set_axis_off()
   plt.show()
+

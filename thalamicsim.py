@@ -83,7 +83,7 @@ bodor_et_al2008["weights"] /= np.sum(bodor_et_al2008["weights"])
 
 gsyn = np.load('gsyn.npy', allow_pickle=True).tolist()
 
-from thalamocortical_cell import Cell
+from vmcell import Cell
 
 
 compiler.register_object(base, Cell)
