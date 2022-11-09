@@ -16,11 +16,11 @@
       "FromAxonNav16": { },
       "FromAxonCaT":   { },
       "FromAxonCaL":   { },
-      "FromAxonM":     { "proximal":1, "distal":50, "somatic":1, "dend1":1, "deepdend":1 },
+      "FromAxonM":     { "proximal":1, "distal":1, "somatic":1, "dend1":1, "deepdend":1 },
       "FromAxonH":     { "proximal":0, "distal":0,  "somatic":1, "dend1":1, "deepdend":1 },
-      "FromAxonKDR":   { "proximal":5, "distal":1,  "somatic":1, "dend1":1, "deepdend":1 },
+      "FromAxonKDR":   { "proximal":5, "distal":5,  "somatic":1, "dend1":1, "deepdend":1 },
       "FromAxonKA":    { "proximal":1, "distal":1,  "somatic":1, "dend1":1, "deepdend":1 },
-      "FromAxonKD":    { "proximal":1, "distal":9,  "somatic":1, "dend1":1, "deepdend":1 }
+      "FromAxonKD":    { "proximal":1, "distal":1,  "somatic":1, "dend1":1, "deepdend":1 }
     },
     "parameters": {
         "__comment": "define constants as single values and params to optimize as tuples of bounds: [lower, upper]",
