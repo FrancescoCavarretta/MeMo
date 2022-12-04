@@ -3,7 +3,7 @@ from thalamicsim import mk_vm_microcircuit_test, base, compiler, precompiler, re
 import numpy as np
 
 ntrial = 10
-nmodel = len([k for k in np.load('mkcell/hof_3sd_0_good.npy', allow_pickle=True).tolist().keys() if k[0].startswith('control')])
+nmodel = len([k for k in np.load('vmcell/hof_3sd_0_good.npy', allow_pickle=True).tolist().keys() if k[0].startswith('control')])
 print ('nmodel', nmodel)
 
 

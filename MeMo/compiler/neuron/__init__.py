@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 from . import modules
 
-modules.register_modules('.')
+import os
+modules.register_modules(os.path.dirname(__file__))
 
 import gc
 gc.disable()

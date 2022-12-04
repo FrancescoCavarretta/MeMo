@@ -1,21 +1,21 @@
-import sim.memo.model as model
-import sim.memo.link as link
-import sim.memo.neuron as nrn
-import sim.memo.spiketrain as stn
-import sim.memo.distribution as distr
+import MeMo.memo.model as model
+import MeMo.memo.link as link
+import MeMo.memo.neuron as nrn
+import MeMo.memo.spiketrain as stn
+import MeMo.memo.distribution as distr
 
-import sim.compiler.precompiler as precompiler
-import sim.compiler as compiler
-import sim.compiler.neuron as base
-import sim.compiler.neuron.util.recorder as recorder
+import MeMo.compiler.precompiler as precompiler
+import MeMo.compiler as compiler
+import MeMo.compiler.neuron as base
+import MeMo.compiler.neuron.util.recorder as recorder
 
-import sim.memo.microcircuit as mc
+import MeMo.memo.microcircuit as mc
 
-import sim.memo.neuron as nrn
+import MeMo.memo.neuron as nrn
 
-import sim.nwbio as nwbio
+import MeMo.nwbio as nwbio
 
-from sim.compiler.neuron.modules import neuron_modules
+import MeMo.compiler.neuron
 
 from neuron import h
 
@@ -32,6 +32,28 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
+bodor_et_al2008 = {
+    "xlabels":[0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 'somatic'],
+    "weights":np.array([5.33673534681342, 10.590606603532123, 24.91409649347326, 8.85334015868954, 16.012285641156904, 5.302981827489134, 5.387125671871004, 3.6572178141796883, 8.91140900947019, 1.739665984131058, 1.733267212695175, 1.733267212695175, 1.733267212695175, 1.733267212695175, 1.733267212695175, 1.733267212695175, 1.733267212695175, 6.980899667263891])
+    }
+bodor_et_al2008["weights"] /= np.sum(bodor_et_al2008["weights"])
+
+try:
+  gsyn = np.load('gsyn.npy', allow_pickle=True).tolist()
+except:
+  gsyn = { 'SNRx1':0., 'RTN':0., 'CX':0., 'SNR':0., 'CN_VM':0. }
+  
+import vmcell
+
+
+compiler.register_object(base, vmcell.Cell)
+
+
+from MeMo.compiler.neuron import modules as neuron_modules
+import os
+neuron_modules.register_modules(os.path.join(os.path.dirname(__file__), 'synapses'))
+neuron_modules.compile()
+
 def mk_vm_microcircuit_test(cellid,
                             lesioned_flag,
                             tstop=5000.0):
@@ -41,13 +63,13 @@ def mk_vm_microcircuit_test(cellid,
 
   InhSyn = nrn.Synapse("GABAA", erev=-75.0, tau=14.0)
   bgSyn = InhSyn()
-  rtnSyn = InhSyn()
+  RTNSyn = InhSyn()
   drvSyn = nrn.Synapse("AmpaNmda", erev=0.0, ratio=0.6)
   modSyn = nrn.Synapse("AmpaNmda", erev=0.0, ratio=1.91)
 
 
   bgST = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
-  rtnST = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
+  RTNST = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
   drvST = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
   modST = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
 
@@ -55,9 +77,9 @@ def mk_vm_microcircuit_test(cellid,
   si_mod = SynapticInputs("modulator", modSyn, modST, cell)
   si_bg_sync = SynapticInputs("nigral", bgSyn, bgST, cell)
   si_bg_async = SynapticInputs("nigral", bgSyn, bgST, cell)
-  si_rtn = SynapticInputs("reticular", rtnSyn, rtnST, cell)
+  si_RTN = SynapticInputs("reticular", RTNSyn, RTNST, cell)
 
-  i2t = InputToThalamus("InputToVMThalamus", cell, si_drv, si_mod, si_bg_sync, si_bg_async, si_rtn)
+  i2t = InputToThalamus("InputToVMThalamus", cell, si_drv, si_mod, si_bg_sync, si_bg_async, si_RTN)
 
   i2t.n_nigral    =  17
   i2t.n_reticular = 7
@@ -71,18 +93,6 @@ def mk_vm_microcircuit_test(cellid,
 
 
 
-bodor_et_al2008 = {
-    "xlabels":[0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 'somatic'],
-    "weights":np.array([5.33673534681342, 10.590606603532123, 24.91409649347326, 8.85334015868954, 16.012285641156904, 5.302981827489134, 5.387125671871004, 3.6572178141796883, 8.91140900947019, 1.739665984131058, 1.733267212695175, 1.733267212695175, 1.733267212695175, 1.733267212695175, 1.733267212695175, 1.733267212695175, 1.733267212695175, 6.980899667263891])
-    }
-bodor_et_al2008["weights"] /= np.sum(bodor_et_al2008["weights"])
-
-gsyn = np.load('gsyn.npy', allow_pickle=True).tolist()
-
-from vmcell import Cell
-
-
-compiler.register_object(base, Cell)
 
 
 class SynapticInputs(nrn.Model):
@@ -181,7 +191,7 @@ class InputToThalamus(model.Model):
 def mk_vm_microcircuit(cellid,
                        lesioned_flag,
                        bg_param ={"Regularity":5.0, "MeanRate":50.0, "n":7,  "g":gsyn['SNRx1'], 'burst':None, 'modulation':None, 'template':None },
-                       rtn_param={"Regularity":5.0, "MeanRate":10.0, "n":4,   "g":gsyn['RTN'], 'burst':None, 'modulation':None, 'template':None  },
+                       RTN_param={"Regularity":5.0, "MeanRate":10.0, "n":4,   "g":gsyn['RTN'], 'burst':None, 'modulation':None, 'template':None  },
                        drv_param={"Regularity":5.0, "MeanRate":30.0, "n":35,  "g":gsyn['CN_VM'], 'modulation':None, 'NmdaAmpaRatio':0.6, 'template':None },
                        mod_param={"Regularity":5.0, "MeanRate":15.0, "n":350, "g":gsyn['CX'], 'modulation':None, 'NmdaAmpaRatio':1.91, 'template':None },
                        tstop=5000.0):
@@ -204,7 +214,7 @@ def mk_vm_microcircuit(cellid,
 
   InhSyn = nrn.Synapse("GABAA", erev=-76.4, tau=14.0)
   bgSyn = InhSyn()
-  rtnSyn = InhSyn()
+  RTNSyn = InhSyn()
   drvSyn = nrn.Synapse("AmpaNmda", erev=0.0, ratio=drv_param['NmdaAmpaRatio'])
   modSyn = nrn.Synapse("AmpaNmda", erev=0.0, ratio=mod_param['NmdaAmpaRatio'])
 
@@ -245,12 +255,12 @@ def mk_vm_microcircuit(cellid,
     bgST_async.burst_model = bg_burst_async # add burst
 
 
-  rtnST = mk_abbasi_spike_train(rtn_param) 
+  RTNST = mk_abbasi_spike_train(RTN_param) 
   drvST = mk_abbasi_spike_train(drv_param) 
   modST = mk_abbasi_spike_train(mod_param) 
 
   #print(drv_param, mod_param)
-  for pars, st in [ (bg_param, bgST_sync), (bg_param, bgST_async), (drv_param, drvST), (mod_param, modST), (rtn_param, rtnST) ]:
+  for pars, st in [ (bg_param, bgST_sync), (bg_param, bgST_async), (drv_param, drvST), (mod_param, modST), (RTN_param, RTNST) ]:
     if 'modulation' in pars and pars['modulation']:
       st.modulation_model = stn.SpikeTrain('modulation',
                                            tinit=pars['modulation']['tinit'],
@@ -266,17 +276,17 @@ def mk_vm_microcircuit(cellid,
   si_mod = SynapticInputs("modulator", modSyn, modST, cell)
   si_bg_sync = SynapticInputs("nigral", bgSyn, bgST_sync, cell)
   si_bg_async = SynapticInputs("nigral", bgSyn, bgST_async, cell)
-  si_rtn = SynapticInputs("reticular", rtnSyn, rtnST, cell)
+  si_RTN = SynapticInputs("reticular", RTNSyn, RTNST, cell)
 
-  i2t = InputToThalamus("InputToVMThalamus", cell, si_drv, si_mod, si_bg_sync, si_bg_async, si_rtn, percentsync_nigral=(1 if bg_param['burst'] is None else bg_param['burst']['PercentSync']))
+  i2t = InputToThalamus("InputToVMThalamus", cell, si_drv, si_mod, si_bg_sync, si_bg_async, si_RTN, percentsync_nigral=(1 if bg_param['burst'] is None else bg_param['burst']['PercentSync']))
 
   i2t.n_nigral    =  bg_param['n'] # 6
-  i2t.n_reticular = rtn_param['n'] # 2
+  i2t.n_reticular = RTN_param['n'] # 2
   i2t.n_modulator = mod_param['n'] # 137
   i2t.n_driver    = drv_param['n'] # 10%
 
   i2t.gsyn_nigral    = bg_param['g']
-  i2t.gsyn_reticular = rtn_param['g']
+  i2t.gsyn_reticular = RTN_param['g']
   i2t.gsyn_modulator = mod_param['g']
   i2t.gsyn_driver    = drv_param['g']
 
@@ -476,7 +486,7 @@ def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recordin
 
   params = {
           'bg':{"Regularity":5.0, "MeanRate":50.0, "n":20,   "g":gsyn['SNRx1'], 'burst':None, 'modulation':None, 'template':None },
-          'rtn':{"Regularity":5.0, "MeanRate":10.0, "n":5,   "g":gsyn['rtn'], 'burst':None, 'modulation':None, 'template':None},
+          'RTN':{"Regularity":5.0, "MeanRate":10.0, "n":5,   "g":gsyn['RTN'], 'burst':None, 'modulation':None, 'template':None},
           'drv':{"Regularity":5.0, "MeanRate":30.0, "n":60,  "g":gsyn['CN_VM'], 'modulation':None, 'NmdaAmpaRatio':0.6, 'template':None },
           'mod':{"Regularity":5.0, "MeanRate":15.0, "n":585, "g":gsyn['CX'], 'modulation':None, 'NmdaAmpaRatio':1.91, 'template':None}
           }
@@ -504,7 +514,7 @@ def run_simulation(cellid, lesioned_flag, tstop, seed, key, all_section_recordin
     for k2 in params[k1]:
       print(k1, k2, params[k1][k2])
 
-  vmcircuit, i2t = mk_vm_microcircuit(cellid, lesioned_flag, tstop=tstop, bg_param=params['bg'], rtn_param=params['rtn'], drv_param=params['drv'], mod_param=params['mod'])
+  vmcircuit, i2t = mk_vm_microcircuit(cellid, lesioned_flag, tstop=tstop, bg_param=params['bg'], RTN_param=params['RTN'], drv_param=params['drv'], mod_param=params['mod'])
 
   return run(vmcircuit, i2t, tstop, (seed, 0), key,
              all_section_recording=all_section_recording, all_synapse_recording=all_synapse_recording, current_recording=current_recording,

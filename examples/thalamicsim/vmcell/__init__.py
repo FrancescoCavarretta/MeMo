@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
+import MeMo.compiler.neuron.modules as modules
+import os
 
+# register model mechanisms
+modules.register_modules(os.path.join(os.path.dirname(__file__), './mechanisms'))
+      
 class Cell:
   
   def __del__(self):
@@ -48,13 +53,7 @@ class Cell:
     return self._mk_cell_model(param, etype=etype, altmorph=altmorph)
   
 
-  def __init__(self, name, cellid=0, lesioned_flag=False):
-      import MeMo.compiler.neuron.modules as modules
-      import os
-
-      # register model mechanisms
-      modules.register_modules(os.path.join(os.path.dirname(__file__), './mechanisms'))
-      
+  def __init__(self, name, cellid=0, lesioned_flag=False):      
       self.name = name
       self.cellid = cellid
       self.product = None
