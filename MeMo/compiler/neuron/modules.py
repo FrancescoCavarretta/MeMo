@@ -4,14 +4,14 @@ _mod_dest_dir = "./modfiles"
 
 def register_modules(dirname):
   '''
-    Add a directory containing mod files which should be compiled
-
-    dirname: directory name
+  Add a directory containing mod files which should be compiled
+  dirname: directory name
   '''
   
   import os
   import queue
   global _mod_file_list
+  global _mod_dest_dir
   
   if not os.path.exists(dirname):
     # if the directory do not even exist, do not add it, just shot a warning
@@ -31,41 +31,8 @@ def register_modules(dirname):
           # check the ext. and add if it is a mod
           _mod_file_list.append(cur_dirname)
           
-      
+  os.system(f"rm -rf {_mod_dest_dir} && mkdir {_mod_dest_dir}")
+  for cur_dirname in _mod_file_list:
+    os.system(f"cp {cur_dirname} {_mod_dest_dir}")
+  os.system(f"nrnivmodl {_mod_dest_dir}")
   
-def neuron_modules(func):
-  def _func(*args):
-    """
-    This decorator compile the mod files, execute the function, then remove the modfiles
-    """
-    import os
-    import shutil
-    global _mod_file_list
-    import uuid
-    import neuron
-    
-    # generate a directory that does not exist
-    mod_dirname = str(uuid.uuid4())
-    while os.path.exists(mod_dirname):
-      mod_dirname = str(uuid.uuid4())
-      
-    register_modules(os.getcwd()) # add modfiles in the directory
-
-    # copy files to a local directory
-    try:
-      os.mkdir(mod_dirname) 
-      for x in _mod_file_list:
-        shutil.copy(x, mod_dirname)
-        
-      os.system(f"nrnivmodl {mod_dirname}")
-      neuron.load_mechanisms(os.getcwd()) # load neuron mechanisms
-      
-      func(*args) # run
-      
-    except:
-      pass
-    finally:
-      shutil.rmtree(mod_dirname) # remove modfiles
-      shutil.rmtree("x86_64") # remove compiled files
-
-  return _func

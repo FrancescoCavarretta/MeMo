@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 from . import modules
 
+modules.register_modules('.')
+
 import gc
 gc.disable()
 
