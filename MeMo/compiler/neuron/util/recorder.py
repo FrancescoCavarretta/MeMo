@@ -1,5 +1,5 @@
 class Recorder:
-  def __init__(self, ref, seg=None, dt=0.25):
+  def __init__(self, ref, seg=None, dt=1):
     from neuron import h, nrn
     import numpy as np
       
@@ -53,9 +53,12 @@ class Recorder:
     self.y.resize(0)
 
 
-  def get(self, dt=0.2):
+  def get(self, dt=None):
     import numpy as np
-    
+
+    if dt is None:
+      dt = self.dt
+      
     try:
       self._flush()
     except ValueError:
