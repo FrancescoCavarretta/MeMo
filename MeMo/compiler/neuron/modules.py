@@ -30,7 +30,11 @@ def register_modules(dirname):
       elif os.path.splitext(cur_dirname)[1].lower() == ".mod":
           # check the ext. and add if it is a mod
           _mod_file_list.append(cur_dirname)
-          
+
+
+def compile():
+  import os
+  global _mod_dest_dir
   os.system(f"rm -rf {_mod_dest_dir} && mkdir {_mod_dest_dir}")
   for cur_dirname in _mod_file_list:
     os.system(f"cp {cur_dirname} {_mod_dest_dir}")

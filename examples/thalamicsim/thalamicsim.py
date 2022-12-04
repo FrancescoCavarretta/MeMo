@@ -70,10 +70,6 @@ def mk_vm_microcircuit_test(cellid,
   return vmcircuit, i2t
 
 
-#bodor_et_al2008 = {
-#    "xlabels":[0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 'somatic'],
-#    "weights":np.array([5.33673534681342, 10.590606603532123, 24.91409649347326, 8.85334015868954, 16.012285641156904, 5.302981827489134, 5.387125671871004, 3.6572178141796883, 8.91140900947019, 1.739665984131058, 1.733267212695175, 6.980899667263891])
-#    }
 
 bodor_et_al2008 = {
     "xlabels":[0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 'somatic'],
@@ -184,10 +180,10 @@ class InputToThalamus(model.Model):
   
 def mk_vm_microcircuit(cellid,
                        lesioned_flag,
-                       bg_param ={"Regularity":5.0, "MeanRate":50.0, "n":20,  "g":gsyn['SNRx1'], 'burst':None, 'modulation':None, 'template':None },
-                       rtn_param={"Regularity":5.0, "MeanRate":10.0, "n":5,   "g":gsyn['rtn'], 'burst':None, 'modulation':None, 'template':None  },
-                       drv_param={"Regularity":5.0, "MeanRate":30.0, "n":60,  "g":gsyn['CN_VM'], 'modulation':None, 'NmdaAmpaRatio':0.6, 'template':None },
-                       mod_param={"Regularity":5.0, "MeanRate":15.0, "n":585, "g":gsyn['CX'], 'modulation':None, 'NmdaAmpaRatio':1.91, 'template':None },
+                       bg_param ={"Regularity":5.0, "MeanRate":50.0, "n":7,  "g":gsyn['SNRx1'], 'burst':None, 'modulation':None, 'template':None },
+                       rtn_param={"Regularity":5.0, "MeanRate":10.0, "n":4,   "g":gsyn['RTN'], 'burst':None, 'modulation':None, 'template':None  },
+                       drv_param={"Regularity":5.0, "MeanRate":30.0, "n":35,  "g":gsyn['CN_VM'], 'modulation':None, 'NmdaAmpaRatio':0.6, 'template':None },
+                       mod_param={"Regularity":5.0, "MeanRate":15.0, "n":350, "g":gsyn['CX'], 'modulation':None, 'NmdaAmpaRatio':1.91, 'template':None },
                        tstop=5000.0):
 
 

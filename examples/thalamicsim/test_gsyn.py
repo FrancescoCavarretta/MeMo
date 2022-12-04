@@ -2,8 +2,8 @@ import thalamicsim as ts
 from thalamicsim import mk_vm_microcircuit_test, base, compiler, precompiler, recorder as rec
 import numpy as np
 
-ntrial = 5
-nmodel = len([k for k in np.load('mkcell/hof_3sd_good.npy', allow_pickle=True).tolist().keys() if k[0] == 'control'])
+ntrial = 10
+nmodel = len([k for k in np.load('mkcell/hof_3sd_0_good.npy', allow_pickle=True).tolist().keys() if k[0].startswith('control')])
 print ('nmodel', nmodel)
 
 
@@ -59,9 +59,7 @@ def _test(cellid, input_name, gsyn, nsyn, seed, vclamp, kwargs, tstop=5500.0):
   data = rr_i.get()
   data = data[np.logical_and(data[:, 0] >= 5000, data[:,0]<=5250), :]
   data[:, 1] = np.abs(data[:, 1] - data[0, 1])
-##  import matplotlib.pyplot as plt
-##  plt.plot(data[:,0],data[:,1])
-##  plt.show()
+
   Di = np.max(data[:, 1])
   
   clean(r)
@@ -133,9 +131,9 @@ g = {"SNRx13":g_mean_snr_13, "SNRx1":g_mean_snr_1, "SNRx3":g_mean_snr_3,
      "CX":g_mean_cx,
      "CN_VM":g_mean_cn_vm,
      "CN_VL":g_mean_cn_vl,
-     "rtn": g_mean_rtn}
+     "RTN": g_mean_rtn}
 
-np.save("gsyn.old.npy", g, allow_pickle=True)
+np.save("gsyn.npy", g, allow_pickle=True)
 
 for k in g:
     print (k, np.mean(g[k]))

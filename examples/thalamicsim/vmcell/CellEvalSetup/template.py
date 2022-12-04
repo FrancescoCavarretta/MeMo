@@ -214,7 +214,7 @@ def define_morphology(morphology_filename, do_set_nseg=1e9):
 
     # Use default moprhology class from BluePyOpt
     return ephys.morphologies.NrnFileMorphology(
-        os.path.join(morphology_filename),
+        os.path.join(os.path.dirname(__file__), '..', morphology_filename),
         do_replace_axon=True,
         do_set_nseg=do_set_nseg)
 
@@ -225,7 +225,7 @@ def create(recipe, etype, altmorph=None):
     if altmorph is None:
         morph_path = os.path.join(os.path.join(recipe[etype]['morph_path'], recipe[etype]['morphology']))
     else:
-        morph_path = altmorph
+        morph_path = os.path.join(recipe[etype]['morph_path'], altmorph)
 
     cell = ephys.models.CellModel(
         etype,
