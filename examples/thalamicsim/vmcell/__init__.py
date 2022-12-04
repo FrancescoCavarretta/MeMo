@@ -37,7 +37,7 @@ class Cell:
   def mk_cell_model(self, cellid, control):
     import os
 
-    param = self.load_params(os.path.join(os.path.dirname(__file__), "hof_3sd_good.npy"))
+    param = self.load_params(os.path.join(os.path.dirname(__file__), "hof_3sd_0_good.npy"))
 
     # select etype
     etype = "control" if control else "lesioned"

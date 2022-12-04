@@ -118,9 +118,9 @@ def define_parameters(params_filename):
         if distribution.startswith("FromAxon"):
             if distribution.startswith("FromAxonNa"):
                 if distribution.endswith("12"):
-                    scaler = CustomChannelDistribution.NrnSegmentNaDistanceScaler(19.0, 19.0)
+                    scaler = CustomChannelDistribution.NrnSegmentNaDistanceScaler(19.0, 1.0)
                 elif distribution.endswith("16"):
-                    scaler = CustomChannelDistribution.NrnSegmentNaDistanceScaler(1.0, 1.0)
+                    scaler = CustomChannelDistribution.NrnSegmentNaDistanceScaler(1.0, 19.0)
                 else:
                     raise Exception()
             elif distribution.startswith("FromAxonCaT"):
@@ -223,7 +223,7 @@ def create(recipe, etype, altmorph=None):
     """Create cell template"""
 
     if altmorph is None:
-        morph_path = os.path.join(os.path.dirname(__file__), '..', os.path.join(recipe[etype]['morph_path'], recipe[etype]['morphology']))
+        morph_path = os.path.join(os.path.join(recipe[etype]['morph_path'], recipe[etype]['morphology']))
     else:
         morph_path = altmorph
 
