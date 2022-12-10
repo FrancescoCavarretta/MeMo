@@ -218,9 +218,9 @@ if __name__ == '__main__':
         max_process = int(sys.argv[sys.argv.index('--max_process')+1])
     except:
         max_process = None      
-    
+    cfgs = np.load(filenamein, allow_pickle=True).tolist()
     params = []
-    for c in np.load(filenamein, allow_pickle=True).tolist()[init_index:end_index]:
+    for c in cfgs[init_index:end_index]:
         c_cpy = dict(c.copy())
         del c_cpy['cellid'], c_cpy['lesioned_flag'], c_cpy['tstop'], c_cpy['seed'], c_cpy['key']
         params.append({'args':(c['cellid'], c['lesioned_flag'], c['tstop'], c['seed'], c['key']),
@@ -285,14 +285,14 @@ if __name__ == '__main__':
 
     if '--no-output' not in sys.argv:
         file_index = 0
-        fw = nwbio.FileWriter(filenameout  + ("_%d" % file_index) + ".nwb", "thalamic_data", "thalamic_data_id", max_size=None)
+        fw = nwbio.FileWriter(filenameout  + ("_%d" % file_index) + ".nwb", str(cfgs), "thalamic_data_id", max_size=None)
         filenames_to_del = []
         
         for out in res:
             if fw is not None and fw.nwbfile is not None and len(fw.nwbfile.acquisition) >= file_max_size:
                 fw.close()
                 file_index += 1
-                fw = nwbio.FileWriter(filenameout  + ("_%d" % file_index) + ".nwb", "thalamic_data", "thalamic_data_id", max_size=None)
+                fw = nwbio.FileWriter(filenameout  + ("_%d" % file_index) + ".nwb", str(cfgs), "thalamic_data_id", max_size=None)
 
             filenames_to_del.append(out)
             

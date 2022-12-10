@@ -5,6 +5,7 @@ import os
 
 # register model mechanisms
 modules.register_modules(os.path.join(os.path.dirname(__file__), './mechanisms'))
+_MODEL_CONFIG_FILENAME = os.path.join(os.path.dirname(__file__), 'vmcell/hof_chk2.npy'))
       
 class Cell:
   
@@ -22,7 +23,7 @@ class Cell:
     return sorted(np.load(filename, allow_pickle=True).tolist().items())
 
 
-  def _mk_cell_model(self, params, recipes=None, etype="control_719", cvode_active=True, altmorph=None):
+  def _mk_cell_model(self, params, recipes=None, etype="control", cvode_active=True, altmorph=None):
     import os
     import json
     
@@ -42,13 +43,13 @@ class Cell:
   def mk_cell_model(self, cellid=0, control=True, altmorph=None):
     import os
 
-    param = self.load_params(os.path.join(os.path.dirname(__file__), "hof_3sd_0_good.npy"))
+    param = self.load_params(os.path.join(os.path.dirname(__file__), _MODEL_CONFIG_FILENAME))
 
     # select etype
-    etype = "control_719" if control else "lesioned_719"
+    etype = "control" if control else "lesioned"
 
     # filter the etypes
-    param = [ p for p in param if p[0][0] == etype ][cellid][1]['parameter']
+    param = [ p for p in param if p[0][0].startswith(etype) ][cellid][1]['parameter']
 
     return self._mk_cell_model(param, etype=etype, altmorph=altmorph)
   

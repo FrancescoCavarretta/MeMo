@@ -1,5 +1,5 @@
 class Recorder:
-  def __init__(self, ref, seg=None, dt=1):
+  def __init__(self, ref, seg=None, dt=1, density_variable=False):
     from neuron import h, nrn
     import numpy as np
       
@@ -14,9 +14,13 @@ class Recorder:
     else:
         self.t.record(h._ref_t)
         self.y.record(ref)
-        
-        
+
+    self.density_variable = density_variable
+    self.seg = seg
     self.dt = dt
+
+    # it raise an exception if, with the density variable, there is no area
+    assert (density_variable and seg is not None) or not density_variable
 
   def _get(self):
     import numpy as np
@@ -70,6 +74,11 @@ class Recorder:
     # interpolation
     tp = np.arange(r[0, 0], r[-1, 0], dt)
     yp = np.interp(tp, r[:, 0], r[:, 1])
+
+    # if it is a density variable multiply by area
+    if self.density_variable:
+      yp = yp * self.seg.area()
+      
     r = np.array([ tp, yp ]).T    
 
     return r

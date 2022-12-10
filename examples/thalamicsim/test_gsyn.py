@@ -1,10 +1,21 @@
 import thalamicsim as ts
-from thalamicsim import mk_vm_microcircuit_test, base, compiler, precompiler, recorder as rec
+from thalamicsim import mk_vm_microcircuit_test, base, compiler, precompiler, recorder as rec, stn
 import numpy as np
 
 ntrial = 10
 nmodel = len([k for k in np.load('vmcell/hof_3sd_0_good.npy', allow_pickle=True).tolist().keys() if k[0].startswith('control')])
 print ('nmodel', nmodel)
+
+def mk_default_inputs():
+
+  bgST_sync = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
+  bgST_async = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
+  rtnST = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
+  drvST = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
+  modST = stn.SpikeTrain("regular", tstart=5000, number=1, mean_rate=10.0, time_unit="ms")
+
+  return bgST_sync, bgST_async, rtnST, drvST, modST
+
 
 
 def clean(r):
@@ -19,7 +30,7 @@ def _test(cellid, input_name, gsyn, nsyn, seed, vclamp, kwargs, tstop=5500.0):
   from neuron import h
   import numpy as np
 
-  vmcircuit, i2t = mk_vm_microcircuit_test(cellid, False)
+  vmcircuit, i2t = mk_vm_microcircuit_test(cellid, False, *mk_default_inputs())
 
   i2t.n_reticular = 0
   i2t.n_nigral = 0
